@@ -1,10 +1,10 @@
 # TV VOD
 
-A TV streaming and video-on-demand application — exploring rapid prototyping with Bolt.new.
+A video-on-demand streaming application designed for TV operating systems — exploring rapid prototyping with Bolt.new.
 
 ## Overview
 
-This project experiments with building a modern TV streaming experience, covering features like live TV, on-demand content, and user personalization.
+This project focuses on building a modern VOD streaming experience optimized for smart TV platforms such as webOS (LG), Tizen (Samsung), Android TV, and Fire OS (Amazon). The emphasis is on TV-native navigation, remote control interaction, and large-screen UI patterns.
 
 ## Getting Started
 

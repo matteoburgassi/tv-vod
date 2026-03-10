@@ -48,7 +48,8 @@ export function getStreamUrl(deliveries?: { ba?: Record<string, { url: string }[
   return pickBestUrl(deliveries.ba);
 }
 
-export function getMainStreamUrl(deliveries?: { mainDeliveries?: Record<string, { url: string }[]> }): string | null {
-  if (!deliveries?.mainDeliveries) return null;
-  return pickBestUrl(deliveries.mainDeliveries);
+export function getMainStreamUrl(deliveries?: { mainDelivery?: { url: string; drm: boolean } }): string | null {
+  if (!deliveries?.mainDelivery) return null;
+  if (deliveries.mainDelivery.drm) return null;
+  return deliveries.mainDelivery.url || null;
 }

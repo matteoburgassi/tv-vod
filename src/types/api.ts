@@ -20,7 +20,15 @@ export interface DeliveryQuality {
 
 export interface ContentDeliveries {
   ba?: Record<string, DeliveryQuality[]>;
-  mainDeliveries?: Record<string, DeliveryQuality[]>;
+  mainDelivery?: {
+    url: string;
+    type: string;
+    drm: boolean;
+    duration: number;
+    resolution: string;
+    audio: string[] | null;
+    subtitle: string[] | null;
+  };
 }
 
 export interface ContentItem {

@@ -47,6 +47,12 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
     video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
   }, []);
 
+  const seekToRatio = useCallback((ratio: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = ratio * video.duration;
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     if (video) video.play().catch(() => setPlaying(false));
@@ -131,7 +137,7 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
           <PlayerBackButton onClose={onClose} seek={seek} />
 
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-8 pt-20">
-            <ProgressBar progress={progress} seek={seek} />
+            <ProgressBar progress={progress} seek={seek} onClickSeek={seekToRatio} />
             <div className="mt-4 flex items-center gap-6">
               <PlayPauseButton playing={playing} onToggle={togglePlay} seek={seek} />
               <span className="text-sm text-white/80">
@@ -182,7 +188,8 @@ function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta
   );
 }
 
-function ProgressBar({ progress, seek }: { progress: number; seek: (delta: number) => void }) {
+function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: (delta: number) => void; onClickSeek: (ratio: number) => void }) {
+  const barRef = useRef<HTMLDivElement>(null);
   const { ref, focused } = useFocusable({
     focusKey: 'player-progress',
     onArrowPress: (direction: string) => {
@@ -206,12 +213,24 @@ function ProgressBar({ progress, seek }: { progress: number; seek: (delta: numbe
     },
   });
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    onClickSeek(ratio);
+  };
+
   return (
     <div
-      ref={ref}
-      className={`h-2 rounded-full transition-all ${
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        (barRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
+      className={`h-2 cursor-pointer rounded-full transition-all ${
         focused ? 'bg-white/40 ring-2 ring-white/60' : 'bg-white/20'
       }`}
+      onClick={handleClick}
     >
       <div
         className="h-full rounded-full bg-white transition-all"

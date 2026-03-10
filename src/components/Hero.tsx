@@ -1,20 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import { getArtBackground, getHighlight, getHighlightTitle } from '../utils/assets';
 
 interface HeroProps {
   items: ContentItem[];
+  firstRowFocusKey?: string;
 }
 
-export default function Hero({ items }: HeroProps) {
+export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
   const { ref, focusKey } = useFocusable({
+    focusKey: 'hero',
     isFocusBoundary: false,
     trackChildren: true,
   });
+
+  const handleArrowPress = useCallback((direction: string) => {
+    if (direction === 'up') {
+      setFocus('header');
+      return false;
+    }
+    if (direction === 'down' && firstRowFocusKey) {
+      setFocus(firstRowFocusKey);
+      return false;
+    }
+    return true;
+  }, [firstRowFocusKey]);
 
   useEffect(() => {
     if (items.length <= 1) return;
@@ -66,10 +80,12 @@ export default function Hero({ items }: HeroProps) {
               label="Watch"
               primary
               onPress={() => navigate(`/content/${item.content_id}`)}
+              onArrowPress={handleArrowPress}
             />
             <HeroButton
               label="More Info"
               onPress={() => navigate(`/content/${item.content_id}`)}
+              onArrowPress={handleArrowPress}
             />
           </div>
         </div>
@@ -97,13 +113,15 @@ function HeroButton({
   label,
   primary = false,
   onPress,
+  onArrowPress,
 }: {
   label: string;
   primary?: boolean;
   onPress: () => void;
+  onArrowPress?: (direction: string) => boolean;
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
-  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
 
   useEffect(() => {
     if (focused && btnRef.current) {

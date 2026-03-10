@@ -9,10 +9,13 @@ interface ContentRowProps {
   title: string;
   items: ContentItem[];
   showBadge?: boolean;
+  focusKeyOverride?: string;
+  onArrowPress?: (direction: string) => boolean;
 }
 
-export default function ContentRow({ title, items, showBadge = false }: ContentRowProps) {
+export default function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
+    focusKey: focusKeyOverride,
     trackChildren: true,
   });
 
@@ -33,7 +36,7 @@ export default function ContentRow({ title, items, showBadge = false }: ContentR
           className="flex gap-4 overflow-x-auto px-12"
         >
           {items.map((item) => (
-            <ContentCard key={item.content_id} item={item} showBadge={showBadge} />
+            <ContentCard key={item.content_id} item={item} showBadge={showBadge} onArrowPress={onArrowPress} />
           ))}
         </div>
       </div>

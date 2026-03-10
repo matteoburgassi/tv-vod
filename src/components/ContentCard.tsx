@@ -7,9 +7,10 @@ import { getCoverImage } from '../utils/assets';
 interface ContentCardProps {
   item: ContentItem;
   showBadge?: boolean;
+  onArrowPress?: (direction: string) => boolean;
 }
 
-export default function ContentCard({ item, showBadge = false }: ContentCardProps) {
+export default function ContentCard({ item, showBadge = false, onArrowPress }: ContentCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -19,6 +20,7 @@ export default function ContentCard({ item, showBadge = false }: ContentCardProp
 
   const { ref, focused } = useFocusable({
     onEnterPress: onPress,
+    onArrowPress,
   });
 
   useEffect(() => {

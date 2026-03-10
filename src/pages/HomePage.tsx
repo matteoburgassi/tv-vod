@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { fetchContentsByCategory, fetchRubricList } from '../services/api';
 import { HERO_RUBRIC_ID, CATEGORY_RUBRIC_IDS } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
@@ -63,18 +63,48 @@ export default function HomePage() {
     if (!loading) focusSelf();
   }, [loading, focusSelf]);
 
+  const rowFocusKeys = useMemo(
+    () => rows.map((_, i) => `content-row-${i}`),
+    [rows.length],
+  );
+
+  const makeRowArrowPress = useCallback(
+    (rowIndex: number) => (direction: string) => {
+      if (direction === 'up') {
+        if (rowIndex === 0) {
+          setFocus('hero');
+        } else {
+          setFocus(rowFocusKeys[rowIndex - 1]);
+        }
+        return false;
+      }
+      if (direction === 'down') {
+        if (rowIndex < rowFocusKeys.length - 1) {
+          setFocus(rowFocusKeys[rowIndex + 1]);
+        }
+        return false;
+      }
+      return true;
+    },
+    [rowFocusKeys],
+  );
+
   if (loading && !heroItems.length) return <LoadingSpinner />;
 
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref}>
-        {heroItems.length > 0 && <Hero items={heroItems.slice(0, 5)} />}
+        {heroItems.length > 0 && (
+          <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rowFocusKeys[0]} />
+        )}
         <div className="relative z-10 -mt-20 pb-20">
-          {rows.map((row) => (
+          {rows.map((row, i) => (
             <ContentRow
               key={row.rubric.rubric_id}
               title={row.rubric.rubric_title}
               items={row.items}
+              focusKeyOverride={rowFocusKeys[i]}
+              onArrowPress={makeRowArrowPress(i)}
             />
           ))}
           {loading && <LoadingSpinner />}

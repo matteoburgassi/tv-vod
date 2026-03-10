@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 
 export default function Header() {
   const [query, setQuery] = useState('');
@@ -9,9 +9,18 @@ export default function Header() {
   const location = useLocation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { ref, focusKey } = useFocusable({
+    focusKey: 'header',
     isFocusBoundary: false,
     trackChildren: true,
   });
+
+  const handleArrowPress = useCallback((direction: string) => {
+    if (direction === 'down') {
+      setFocus('hero');
+      return false;
+    }
+    return true;
+  }, []);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -46,15 +55,15 @@ export default function Header() {
           scrolled ? 'bg-[#0a0a0a]/95 backdrop-blur-md' : 'bg-transparent'
         }`}
       >
-        <LogoButton onPress={() => navigate('/')} />
-        <SearchInput value={query} onChange={handleChange} />
+        <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />
+        <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
       </header>
     </FocusContext.Provider>
   );
 }
 
-function LogoButton({ onPress }: { onPress: () => void }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress: (direction: string) => boolean }) {
+  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
 
   return (
     <button
@@ -72,14 +81,17 @@ function LogoButton({ onPress }: { onPress: () => void }) {
 function SearchInput({
   value,
   onChange,
+  onArrowPress,
 }: {
   value: string;
   onChange: (v: string) => void;
+  onArrowPress: (direction: string) => boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { ref, focused } = useFocusable({
     onEnterPress: () => inputRef.current?.focus(),
+    onArrowPress,
   });
 
   return (

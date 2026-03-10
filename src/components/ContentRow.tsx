@@ -1,4 +1,3 @@
-import { useRef, useEffect, useCallback } from 'react';
 import {
   useFocusable,
   FocusContext,
@@ -13,31 +12,9 @@ interface ContentRowProps {
 }
 
 export default function ContentRow({ title, items, showBadge = false }: ContentRowProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
     trackChildren: true,
   });
-
-  const onChildFocused = useCallback(() => {
-    if (!scrollRef.current) return;
-    const container = scrollRef.current;
-    const focused = container.querySelector('[class*="scale-110"]');
-    if (focused) {
-      const el = focused.closest('[style*="width"]') as HTMLElement | null;
-      if (el) {
-        const left = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
-        container.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (hasFocusedChild) {
-      const timer = setTimeout(onChildFocused, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [hasFocusedChild, onChildFocused]);
 
   if (!items.length) return null;
 
@@ -53,9 +30,7 @@ export default function ContentRow({ title, items, showBadge = false }: ContentR
           {title}
         </h2>
         <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto px-12 scrollbar-none"
-          style={{ scrollbarWidth: 'none' }}
+          className="flex gap-4 overflow-x-auto px-12"
         >
           {items.map((item) => (
             <ContentCard key={item.content_id} item={item} showBadge={showBadge} />

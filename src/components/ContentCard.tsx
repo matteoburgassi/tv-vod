@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
@@ -11,6 +11,8 @@ interface ContentCardProps {
 
 export default function ContentCard({ item, showBadge = false }: ContentCardProps) {
   const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const onPress = useCallback(() => {
     navigate(`/content/${item.content_id}`);
   }, [navigate, item.content_id]);
@@ -19,11 +21,20 @@ export default function ContentCard({ item, showBadge = false }: ContentCardProp
     onEnterPress: onPress,
   });
 
+  useEffect(() => {
+    if (focused && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [focused]);
+
   const cover = getCoverImage(item.assets);
 
   return (
     <div
-      ref={ref}
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       className="group shrink-0 cursor-pointer"
       style={{ width: 180 }}
       onClick={onPress}

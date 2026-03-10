@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
@@ -147,10 +147,21 @@ export default function ContentDetailsPage() {
 }
 
 function PlayButton({ onPress }: { onPress: () => void }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress });
+
+  useEffect(() => {
+    if (focused && btnRef.current) {
+      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [focused]);
+
   return (
     <button
-      ref={ref}
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+      }}
       onClick={onPress}
       className={`flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black transition-all duration-200 hover:bg-white/90 ${
         focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
@@ -165,10 +176,21 @@ function PlayButton({ onPress }: { onPress: () => void }) {
 }
 
 function BackButton({ onPress }: { onPress: () => void }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress });
+
+  useEffect(() => {
+    if (focused && btnRef.current) {
+      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [focused]);
+
   return (
     <button
-      ref={ref}
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+      }}
       onClick={onPress}
       className={`rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/25 ${
         focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''

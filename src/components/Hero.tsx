@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
@@ -11,7 +11,10 @@ interface HeroProps {
 export default function Hero({ items }: HeroProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
-  const { ref, focusKey } = useFocusable({});
+  const { ref, focusKey } = useFocusable({
+    isFocusBoundary: false,
+    trackChildren: true,
+  });
 
   useEffect(() => {
     if (items.length <= 1) return;
@@ -99,11 +102,21 @@ function HeroButton({
   primary?: boolean;
   onPress: () => void;
 }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress });
+
+  useEffect(() => {
+    if (focused && btnRef.current) {
+      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, [focused]);
 
   return (
     <button
-      ref={ref}
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+      }}
       onClick={onPress}
       className={`
         rounded-lg px-8 py-3 text-lg font-medium transition-all duration-200

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { init } from '@noriginmedia/norigin-spatial-navigation';
+import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import ContentDetailsPage from './pages/ContentDetailsPage';
@@ -10,10 +10,15 @@ init({
   visualDebug: false,
 });
 
-export default function App() {
+function AppLayout() {
+  const { ref, focusKey } = useFocusable({
+    isFocusBoundary: false,
+    trackChildren: true,
+  });
+
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-[#0a0a0a]">
+    <FocusContext.Provider value={focusKey}>
+      <div ref={ref} className="min-h-screen bg-[#0a0a0a]">
         <Header />
         <main>
           <Routes>
@@ -23,6 +28,14 @@ export default function App() {
           </Routes>
         </main>
       </div>
+    </FocusContext.Provider>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   );
 }

@@ -8,7 +8,10 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { ref, focusKey } = useFocusable({});
+  const { ref, focusKey } = useFocusable({
+    isFocusBoundary: false,
+    trackChildren: true,
+  });
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -43,16 +46,26 @@ export default function Header() {
           scrolled ? 'bg-[#0a0a0a]/95 backdrop-blur-md' : 'bg-transparent'
         }`}
       >
-        <button
-          onClick={() => navigate('/')}
-          className="text-2xl font-semibold tracking-tight text-white"
-        >
-          Galaxy<span className="text-sky-400">TV</span>
-        </button>
-
+        <LogoButton onPress={() => navigate('/')} />
         <SearchInput value={query} onChange={handleChange} />
       </header>
     </FocusContext.Provider>
+  );
+}
+
+function LogoButton({ onPress }: { onPress: () => void }) {
+  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+
+  return (
+    <button
+      ref={ref}
+      onClick={onPress}
+      className={`text-2xl font-semibold tracking-tight text-white transition-all duration-200 ${
+        focused ? 'scale-105 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]' : ''
+      }`}
+    >
+      Galaxy<span className="text-sky-400">TV</span>
+    </button>
   );
 }
 

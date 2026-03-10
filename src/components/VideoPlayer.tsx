@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { pause, resume } from '@noriginmedia/norigin-spatial-navigation';
 
 interface VideoPlayerProps {
   url: string;
@@ -19,6 +20,11 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setShowControls(false), 3000);
+  }, []);
+
+  useEffect(() => {
+    pause();
+    return () => { resume(); };
   }, []);
 
   useEffect(() => {
@@ -48,6 +54,10 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
         case 'ArrowLeft':
           e.preventDefault();
           video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case 'ArrowUp':
+        case 'ArrowDown':
+          e.preventDefault();
           break;
       }
     };

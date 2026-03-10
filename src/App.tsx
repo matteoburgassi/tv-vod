@@ -8,6 +8,7 @@ import SearchPage from './pages/SearchPage';
 init({
   debug: false,
   visualDebug: false,
+  useGetBoundingClientRect: true,
 });
 
 function AppLayout() {

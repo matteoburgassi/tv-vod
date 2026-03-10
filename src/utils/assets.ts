@@ -34,13 +34,21 @@ export function getHighlightTitle(assets: ContentAssets): string | null {
   return items[0].url;
 }
 
-export function getStreamUrl(deliveries?: { ba?: Record<string, { url: string }[]> }): string | null {
-  if (!deliveries?.ba) return null;
-  const qualities = deliveries.ba;
+function pickBestUrl(qualities: Record<string, { url: string }[]>): string | null {
   const preferred = qualities['HD (720p)'];
   if (preferred?.[0]?.url) return preferred[0].url;
 
   const firstKey = Object.keys(qualities)[0];
   if (!firstKey) return null;
   return qualities[firstKey]?.[0]?.url ?? null;
+}
+
+export function getStreamUrl(deliveries?: { ba?: Record<string, { url: string }[]> }): string | null {
+  if (!deliveries?.ba) return null;
+  return pickBestUrl(deliveries.ba);
+}
+
+export function getMainStreamUrl(deliveries?: { mainDeliveries?: Record<string, { url: string }[]> }): string | null {
+  if (!deliveries?.mainDeliveries) return null;
+  return pickBestUrl(deliveries.mainDeliveries);
 }

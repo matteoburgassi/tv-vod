@@ -20,6 +20,7 @@ export interface DeliveryQuality {
 
 export interface ContentDeliveries {
   ba?: Record<string, DeliveryQuality[]>;
+  mainDeliveries?: Record<string, DeliveryQuality[]>;
 }
 
 export interface ContentItem {

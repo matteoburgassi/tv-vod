@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl } from '../utils/assets';
+import { getArtBackground, getStreamUrl, getMainStreamUrl } from '../utils/assets';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -83,27 +83,31 @@ export default function ContentDetailsPage() {
   if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
 
   const bg = getArtBackground(content.assets);
-  const streamUrl = getStreamUrl(content.deliveries);
+  const trailerUrl = getStreamUrl(content.deliveries);
+  const mainUrl = getMainStreamUrl(content.deliveries);
+  const playUrl = mainUrl || trailerUrl;
 
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref}>
-        {showPlayer && streamUrl && (
+        {showPlayer && playUrl && (
           <VideoPlayer
-            url={streamUrl}
+            url={playUrl}
             poster={bg ?? undefined}
             onClose={() => setShowPlayer(false)}
           />
         )}
 
         <div className="relative min-h-[60vh] w-full overflow-hidden">
-          {bg && (
+          {trailerUrl ? (
+            <HeroTrailer src={trailerUrl} poster={bg} />
+          ) : bg ? (
             <img
               src={bg}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />
-          )}
+          ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/30" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-transparent to-transparent" />
 
@@ -118,7 +122,7 @@ export default function ContentDetailsPage() {
                 </span>
               )}
               <div className="mt-4 flex gap-3">
-                {streamUrl && (
+                {playUrl && (
                   <PlayButton onPress={() => setShowPlayer(true)} />
                 )}
                 <BackButton onPress={() => navigate(-1)} />
@@ -199,5 +203,39 @@ function BackButton({ onPress }: { onPress: () => void }) {
     >
       Back
     </button>
+  );
+}
+
+function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  const handleCanPlay = useCallback(() => {
+    setLoaded(true);
+  }, []);
+
+  return (
+    <>
+      {poster && (
+        <img
+          src={poster}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+      <video
+        ref={videoRef}
+        src={src}
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster={poster ?? undefined}
+        onCanPlay={handleCanPlay}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+    </>
   );
 }

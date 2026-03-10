@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { mapKeyEvent } from '../utils/keyMap';
 import { searchContent } from '../services/api';
 import type { ContentItem } from '../types/api';
 import ContentCard from '../components/ContentCard';
@@ -8,10 +9,22 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const query = searchParams.get('q') ?? '';
   const [results, setResults] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const { ref, focusKey, focusSelf } = useFocusable({});
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (mapKeyEvent(e) === 'back') {
+        e.preventDefault();
+        navigate(-1);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [navigate]);
 
   useEffect(() => {
     let cancelled = false;

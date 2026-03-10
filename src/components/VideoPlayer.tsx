@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
+import { mapKeyEvent } from '../utils/keyMap';
 
 interface VideoPlayerProps {
   url: string;
@@ -65,16 +66,19 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
 
   useEffect(() => {
     const interceptor = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Backspace') {
+      const action = mapKeyEvent(e);
+      if (!action) return;
+
+      if (action === 'back') {
         e.preventDefault();
         e.stopPropagation();
         onClose();
         return;
       }
 
-      const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '];
+      const navActions = ['up', 'down', 'left', 'right', 'enter', 'play_pause'];
 
-      if (!showControlsRef.current && navKeys.includes(e.key)) {
+      if (!showControlsRef.current && navActions.includes(action)) {
         e.preventDefault();
         e.stopPropagation();
         resetHideTimer();
@@ -82,31 +86,45 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
         return;
       }
 
-      if (e.key === ' ') {
+      if (action === 'play_pause') {
         e.preventDefault();
         e.stopPropagation();
-        const video = videoRef.current;
-        if (video) {
-          if (video.paused) {
-            video.play();
-            setPlaying(true);
-          } else {
-            video.pause();
-            setPlaying(false);
-          }
-        }
+        togglePlay();
         resetHideTimer();
         return;
       }
 
-      if (navKeys.includes(e.key)) {
+      if (action === 'rewind') {
+        e.preventDefault();
+        e.stopPropagation();
+        seek(-10);
+        resetHideTimer();
+        return;
+      }
+
+      if (action === 'fast_forward') {
+        e.preventDefault();
+        e.stopPropagation();
+        seek(10);
+        resetHideTimer();
+        return;
+      }
+
+      if (action === 'stop') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (navActions.includes(action)) {
         resetHideTimer();
       }
     };
 
     window.addEventListener('keydown', interceptor, { capture: true });
     return () => window.removeEventListener('keydown', interceptor, { capture: true });
-  }, [onClose, resetHideTimer]);
+  }, [onClose, resetHideTimer, togglePlay, seek]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);

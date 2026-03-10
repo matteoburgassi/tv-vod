@@ -1,10 +1,10 @@
-export const API_BASE_URL = 'https://galaxy-api.galaxydve.com';
-export const API_KEY = 'api_key_iatest';
-export const API_SECRET = 'GaLxAiDviTS12*';
-export const CAMPAIGN_ID = '4679';
-export const SERVICE_ID = '39';
-export const COUNTRY_CODE = 'fr';
-export const LANGUAGE_CODE = 'fr';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_KEY = import.meta.env.VITE_API_KEY;
+export const API_SECRET = import.meta.env.VITE_API_SECRET;
+export const CAMPAIGN_ID = import.meta.env.VITE_CAMPAIGN_ID;
+export const SERVICE_ID = import.meta.env.VITE_SERVICE_ID;
+export const COUNTRY_CODE = import.meta.env.VITE_COUNTRY_CODE;
+export const LANGUAGE_CODE = import.meta.env.VITE_LANGUAGE_CODE;
 
 export const HERO_RUBRIC_ID = '268833';
 

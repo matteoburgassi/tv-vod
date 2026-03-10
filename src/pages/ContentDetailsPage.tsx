@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
@@ -69,7 +70,7 @@ export default function ContentDetailsPage() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (showPlayer) return;
-      if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (mapKeyEvent(e) === 'back') {
         e.preventDefault();
         navigate(-1);
       }

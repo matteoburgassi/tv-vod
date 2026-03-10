@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { fetchContentsByCategory, fetchRubricList } from '../services/api';
 import { HERO_RUBRIC_ID, CATEGORY_RUBRIC_IDS } from '../constants/api';
+import { mapKeyEvent } from '../utils/keyMap';
 import type { ContentItem, RubricItem } from '../types/api';
 import Hero from '../components/Hero';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ExitDialog from '../components/ExitDialog';
 
 interface CategoryRow {
   rubric: RubricItem;
@@ -16,7 +18,20 @@ export default function HomePage() {
   const [heroItems, setHeroItems] = useState<ContentItem[]>([]);
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const { ref, focusKey, focusSelf } = useFocusable({});
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (showExitDialog) return;
+      if (mapKeyEvent(e) === 'back') {
+        e.preventDefault();
+        setShowExitDialog(true);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [showExitDialog]);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +125,12 @@ export default function HomePage() {
           {loading && <LoadingSpinner />}
         </div>
       </div>
+      {showExitDialog && (
+        <ExitDialog
+          onConfirm={() => window.close()}
+          onCancel={() => setShowExitDialog(false)}
+        />
+      )}
     </FocusContext.Provider>
   );
 }

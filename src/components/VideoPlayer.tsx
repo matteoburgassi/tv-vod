@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
+import { usePlayer } from '../lib/player';
+import type { DrmConfig } from '../lib/player';
 
 interface VideoPlayerProps {
   url: string;
   poster?: string;
+  drm?: DrmConfig;
   onClose: () => void;
 }
 
-export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerProps) {
+  const { containerRef, state: playerState, play, pause: playerPause, resume: playerResume, seek: playerSeek } = usePlayer();
   const [showControls, setShowControls] = useState(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showControlsRef = useRef(showControls);
@@ -31,38 +31,33 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
   }, []);
 
   const togglePlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play();
-      setPlaying(true);
+    if (playerState.playing) {
+      playerPause();
     } else {
-      video.pause();
-      setPlaying(false);
+      playerResume();
     }
-  }, []);
+  }, [playerState.playing, playerPause, playerResume]);
 
-  const seek = useCallback((delta: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
-  }, []);
+  const seekDelta = useCallback((delta: number) => {
+    playerSeek(playerState.currentTime + delta);
+  }, [playerSeek, playerState.currentTime]);
 
   const seekToRatio = useCallback((ratio: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = ratio * video.duration;
-  }, []);
+    playerSeek(ratio * playerState.duration);
+  }, [playerSeek, playerState.duration]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (video) video.play().catch(() => setPlaying(false));
+    play({ url, poster, drm, autoplay: true });
     resetHideTimer();
     setFocus('player-back');
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
-  }, [resetHideTimer]);
+  }, [url, poster, drm, play, resetHideTimer]);
+
+  useEffect(() => {
+    if (playerState.ended) onClose();
+  }, [playerState.ended, onClose]);
 
   useEffect(() => {
     const interceptor = (e: KeyboardEvent) => {
@@ -97,7 +92,7 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
       if (action === 'rewind') {
         e.preventDefault();
         e.stopPropagation();
-        seek(-10);
+        seekDelta(-10);
         resetHideTimer();
         return;
       }
@@ -105,7 +100,7 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
       if (action === 'fast_forward') {
         e.preventDefault();
         e.stopPropagation();
-        seek(10);
+        seekDelta(10);
         resetHideTimer();
         return;
       }
@@ -124,7 +119,7 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
 
     window.addEventListener('keydown', interceptor, { capture: true });
     return () => window.removeEventListener('keydown', interceptor, { capture: true });
-  }, [onClose, resetHideTimer, togglePlay, seek]);
+  }, [onClose, resetHideTimer, togglePlay, seekDelta]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -132,34 +127,40 @@ export default function VideoPlayer({ url, poster, onClose }: VideoPlayerProps) 
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const progress = duration ? (currentTime / duration) * 100 : 0;
+  const progress = playerState.duration ? (playerState.currentTime / playerState.duration) * 100 : 0;
 
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref} className="fixed inset-0 z-50 bg-black" onMouseMove={resetHideTimer}>
-        <video
-          ref={videoRef}
-          src={url}
-          poster={poster}
-          className="h-full w-full object-contain"
-          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-          onEnded={onClose}
-        />
+        <div ref={containerRef} className="h-full w-full" />
+
+        {playerState.loading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          </div>
+        )}
+
+        {playerState.error && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="rounded-xl bg-red-900/80 px-8 py-4 text-center">
+              <p className="text-lg text-white">{playerState.error}</p>
+            </div>
+          </div>
+        )}
 
         <div
           className={`absolute inset-0 transition-opacity duration-300 ${
             showControls ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
-          <PlayerBackButton onClose={onClose} seek={seek} />
+          <PlayerBackButton onClose={onClose} seek={seekDelta} />
 
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-8 pt-20">
-            <ProgressBar progress={progress} seek={seek} onClickSeek={seekToRatio} />
+            <ProgressBar progress={progress} seek={seekDelta} onClickSeek={seekToRatio} />
             <div className="mt-4 flex items-center gap-6">
-              <PlayPauseButton playing={playing} onToggle={togglePlay} seek={seek} />
+              <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} seek={seekDelta} />
               <span className="text-sm text-white/80">
-                {formatTime(currentTime)} / {formatTime(duration)}
+                {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
               </span>
             </div>
           </div>

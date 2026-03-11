@@ -5,7 +5,7 @@ import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl, getMainStreamUrl } from '../utils/assets';
+import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm } from '../utils/assets';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -85,7 +85,15 @@ export default function ContentDetailsPage() {
   const bg = getArtBackground(content.assets);
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
+  const isDrm = getMainDeliveryDrm(content.deliveries);
   const playUrl = mainUrl || trailerUrl;
+
+  const drmConfig = isDrm && mainUrl ? {
+    merchant: import.meta.env.VITE_DRM_MERCHANT || 'six',
+    userId: import.meta.env.VITE_DRM_USER_ID || 'purchase',
+    sessionId: import.meta.env.VITE_DRM_SESSION_ID || 'sessionId',
+    authToken: import.meta.env.VITE_DRM_AUTH_TOKEN || undefined,
+  } : undefined;
 
   return (
     <FocusContext.Provider value={focusKey}>
@@ -94,6 +102,7 @@ export default function ContentDetailsPage() {
           <VideoPlayer
             url={playUrl}
             poster={bg ?? undefined}
+            drm={drmConfig}
             onClose={() => setShowPlayer(false)}
           />
         )}

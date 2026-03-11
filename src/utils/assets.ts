@@ -50,6 +50,9 @@ export function getStreamUrl(deliveries?: { ba?: Record<string, { url: string }[
 
 export function getMainStreamUrl(deliveries?: { mainDelivery?: { url: string; drm: boolean } }): string | null {
   if (!deliveries?.mainDelivery) return null;
-  if (deliveries.mainDelivery.drm) return null;
   return deliveries.mainDelivery.url || null;
+}
+
+export function getMainDeliveryDrm(deliveries?: { mainDelivery?: { drm: boolean } }): boolean {
+  return deliveries?.mainDelivery?.drm ?? false;
 }

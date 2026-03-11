@@ -12,6 +12,10 @@ export class PlayerCore {
     this.container = container;
   }
 
+  isAttached(): boolean {
+    return this.container !== null;
+  }
+
   async load(request: PlayRequest): Promise<void> {
     if (!this.container) throw new Error('PlayerCore not attached to a container');
 

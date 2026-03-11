@@ -68,9 +68,12 @@ export class DrmEngine implements PlayerEngine {
       const drmEnv = import.meta.env.VITE_DRM_ENV || 'DRMtoday_STAGING';
       const baseUrl = import.meta.env.VITE_DRM_BASE_URL || DRM_BASE_URLS[drmEnv] || DRM_BASE_URLS.DRMtoday_STAGING;
 
+      const sourceType = this.detectSourceType(request.url);
+
       const config: any = {
         source: {
           url: request.url,
+          type: sourceType,
           drmProtected: true,
         },
         autoplay: request.autoplay !== false,
@@ -192,6 +195,16 @@ export class DrmEngine implements PlayerEngine {
         this.updateState({ currentTime });
       }
     }, 250);
+  }
+
+  private detectSourceType(url: string): string {
+    const lower = url.toLowerCase();
+    if (lower.includes('.mpd')) return 'dash';
+    if (lower.includes('.m3u8')) return 'hls';
+    if (lower.includes('.ism')) return 'smooth';
+    // Galaxy DRM proxy URLs (.drm) serve DASH manifests
+    if (lower.includes('.drm')) return 'dash';
+    return 'dash';
   }
 
   private mapError(err: any): string {

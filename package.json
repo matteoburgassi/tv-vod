@@ -9,9 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
-  "optionalDependencies": {
-    "@castlabs/prestoplay": "file:vendor/castlabs-prestoplay"
-  },
   "dependencies": {
     "@noriginmedia/norigin-spatial-navigation": "^2.3.0",
     "@tailwindcss/vite": "^4.2.1",

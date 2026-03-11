@@ -34,6 +34,7 @@ export default function ContentRow({ title, items, showBadge = false, focusKeyOv
         </h2>
         <div
           className="flex gap-4 overflow-x-auto px-12 py-4"
+          style={{ scrollPaddingInline: '3rem' }}
         >
           {items.map((item) => (
             <ContentCard key={item.content_id} item={item} showBadge={showBadge} onArrowPress={onArrowPress} />

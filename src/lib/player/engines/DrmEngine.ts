@@ -2,21 +2,27 @@ import type { PlayerEngine, PlayRequest, PlayerState, StateListener } from '../t
 import { INITIAL_STATE } from '../types';
 
 let installed = false;
+let clppModule: any = null;
 
 async function ensureInstalled() {
   if (installed) return;
 
-  const { clpp } = await import('@castlabs/prestoplay');
-  await import('@castlabs/prestoplay/cl.mse');
-  await import('@castlabs/prestoplay/cl.dash');
-  await import('@castlabs/prestoplay/cl.hls');
-  await import('@castlabs/prestoplay/cl.onboard');
+  try {
+    clppModule = await import('@castlabs/prestoplay');
+    await import('@castlabs/prestoplay/cl.mse');
+    await import('@castlabs/prestoplay/cl.dash');
+    await import('@castlabs/prestoplay/cl.hls');
+    await import('@castlabs/prestoplay/cl.onboard');
 
-  clpp.install(clpp.dash.DashComponent);
-  clpp.install(clpp.hls.HlsComponent);
-  clpp.install(clpp.onboard.OnboardComponent);
+    const { clpp } = clppModule;
+    clpp.install(clpp.dash.DashComponent);
+    clpp.install(clpp.hls.HlsComponent);
+    clpp.install(clpp.onboard.OnboardComponent);
 
-  installed = true;
+    installed = true;
+  } catch {
+    throw new Error('@castlabs/prestoplay is not installed. DRM playback requires the CastLabs SDK.');
+  }
 }
 
 const DRM_BASE_URLS: Record<string, string> = {
@@ -50,7 +56,7 @@ export class DrmEngine implements PlayerEngine {
     try {
       await ensureInstalled();
 
-      const { clpp } = await import('@castlabs/prestoplay');
+      const { clpp } = clppModule;
 
       if (this.player) {
         await this.player.release();

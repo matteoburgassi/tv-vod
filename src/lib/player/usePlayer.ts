@@ -5,18 +5,17 @@ import { INITIAL_STATE } from './types';
 
 export function usePlayer() {
   const coreRef = useRef<PlayerCore | null>(null);
-  const containerRef = useCallback((node: HTMLDivElement | null) => {
-    if (node && coreRef.current) {
-      coreRef.current.attach(node);
-    }
-  }, []);
+  const containerNodeRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<PlayerState>({ ...INITIAL_STATE });
-  const pendingRequest = useRef<PlayRequest | null>(null);
 
   useEffect(() => {
     const core = new PlayerCore();
     coreRef.current = core;
     const unsub = core.onStateChange(setState);
+
+    if (containerNodeRef.current) {
+      core.attach(containerNodeRef.current);
+    }
 
     return () => {
       unsub();
@@ -25,32 +24,24 @@ export function usePlayer() {
     };
   }, []);
 
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    containerNodeRef.current = node;
+    if (node && coreRef.current && !coreRef.current.isAttached()) {
+      coreRef.current.attach(node);
+    }
+  }, []);
+
   const play = useCallback(async (request: PlayRequest) => {
     const core = coreRef.current;
     if (!core) return;
 
-    if (!core.isAttached()) {
-      pendingRequest.current = request;
-      return;
+    if (!core.isAttached() && containerNodeRef.current) {
+      core.attach(containerNodeRef.current);
     }
+    if (!core.isAttached()) return;
 
     await core.load(request);
   }, []);
-
-  const flushPending = useCallback(async () => {
-    if (pendingRequest.current && coreRef.current?.isAttached()) {
-      const req = pendingRequest.current;
-      pendingRequest.current = null;
-      await coreRef.current.load(req);
-    }
-  }, []);
-
-  const containerCallback = useCallback((node: HTMLDivElement | null) => {
-    if (node && coreRef.current) {
-      coreRef.current.attach(node);
-      flushPending();
-    }
-  }, [flushPending]);
 
   const pause = useCallback(() => {
     coreRef.current?.pause();
@@ -69,7 +60,7 @@ export function usePlayer() {
   }, []);
 
   return {
-    containerRef: containerCallback,
+    containerRef,
     state,
     play,
     pause,

@@ -4,13 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx vite",
-    "build": "npx tsc -b && npx vite build",
-    "lint": "npx eslint .",
-    "preview": "npx vite preview"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "optionalDependencies": {
+    "@castlabs/prestoplay": "file:vendor/castlabs-prestoplay-6.30.0.tgz"
   },
   "dependencies": {
-    "@castlabs/prestoplay": "file:vendor/castlabs-prestoplay-6.30.0.tgz",
     "@noriginmedia/norigin-spatial-navigation": "^2.3.0",
     "@tailwindcss/vite": "^4.2.1",
     "@vitejs/plugin-react": "^5.1.1",

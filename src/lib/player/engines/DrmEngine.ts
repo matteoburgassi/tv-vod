@@ -12,6 +12,7 @@ async function ensureInstalled() {
     await import('@castlabs/prestoplay/cl.mse');
     await import('@castlabs/prestoplay/cl.dash');
     await import('@castlabs/prestoplay/cl.hls');
+    await import('@castlabs/prestoplay/cl.crypto');
     await import('@castlabs/prestoplay/cl.onboard');
 
     const { clpp } = clppModule;
@@ -20,7 +21,8 @@ async function ensureInstalled() {
     clpp.install(clpp.onboard.OnboardComponent);
 
     installed = true;
-  } catch {
+  } catch (e) {
+    console.error('[DrmEngine] Failed to load CastLabs SDK:', e);
     throw new Error('@castlabs/prestoplay is not installed. DRM playback requires the CastLabs SDK.');
   }
 }
@@ -38,6 +40,7 @@ export class DrmEngine implements PlayerEngine {
   private timeInterval: ReturnType<typeof setInterval> | null = null;
 
   attach(container: HTMLElement): void {
+    if (!container) throw new Error('DrmEngine.attach: container is null');
     this.videoEl = document.createElement('video');
     this.videoEl.id = `drm-video-${Date.now()}`;
     this.videoEl.style.width = '100%';

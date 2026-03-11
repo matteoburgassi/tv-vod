@@ -7,6 +7,7 @@ export class NativeEngine implements PlayerEngine {
   private listeners = new Set<StateListener>();
 
   attach(container: HTMLElement): void {
+    if (!container) throw new Error('NativeEngine.attach: container is null');
     this.video = document.createElement('video');
     this.video.style.width = '100%';
     this.video.style.height = '100%';

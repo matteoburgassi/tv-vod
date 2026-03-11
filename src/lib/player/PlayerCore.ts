@@ -17,18 +17,20 @@ export class PlayerCore {
   }
 
   async load(request: PlayRequest): Promise<void> {
-    if (!this.container) throw new Error('PlayerCore not attached to a container');
+    const container = this.container;
+    if (!container) throw new Error('PlayerCore not attached to a container');
 
     this.destroyEngine();
 
     if (request.drm) {
       const { DrmEngine } = await import('./engines/DrmEngine');
+      if (!this.container) return;
       this.engine = new DrmEngine();
     } else {
       this.engine = new NativeEngine();
     }
 
-    this.engine.attach(this.container);
+    this.engine.attach(container);
     this.engineUnsub = this.engine.onStateChange((state) => {
       for (const listener of this.stateListeners) {
         listener(state);

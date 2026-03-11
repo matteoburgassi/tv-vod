@@ -23,7 +23,7 @@ export default function ContentRow({ title, items, showBadge = false, focusKeyOv
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="mb-8" onClick={() => focusSelf()}>
+      <div ref={ref} className="mb-4" onClick={() => focusSelf()}>
         <h2
           className={`
             mb-3 px-12 text-xl font-semibold transition-colors duration-200
@@ -33,7 +33,7 @@ export default function ContentRow({ title, items, showBadge = false, focusKeyOv
           {title}
         </h2>
         <div
-          className="flex gap-4 overflow-x-auto px-12"
+          className="flex gap-4 overflow-x-auto px-12 py-4"
         >
           {items.map((item) => (
             <ContentCard key={item.content_id} item={item} showBadge={showBadge} onArrowPress={onArrowPress} />

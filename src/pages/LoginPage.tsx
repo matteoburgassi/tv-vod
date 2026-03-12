@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { loginWithEmail } from '../services/auth';
+import { loginWithEmail } from '@digitalvirgo/drm-player';
 
 export default function LoginPage() {
   const { login } = useAuth();

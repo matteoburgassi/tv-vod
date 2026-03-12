@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { User } from '../types/user';
+import type { User } from '@digitalvirgo/drm-player';
 
 interface AuthState {
   user: User | null;

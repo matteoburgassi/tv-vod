@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
-import { usePlayer } from '../lib/player';
-import type { DrmConfig } from '../lib/player';
+import { usePlayer, PLAYER_CONTAINER_CLASS } from '@digitalvirgo/drm-player';
+import type { DrmConfig } from '@digitalvirgo/drm-player';
 
 interface VideoPlayerProps {
   url: string;
@@ -132,7 +132,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref} className="fixed inset-0 z-50 bg-black" onMouseMove={resetHideTimer}>
-        <div ref={containerRef} className="h-full w-full" />
+        <div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full`} />
 
         {playerState.loading && (
           <div className="absolute inset-0 flex items-center justify-center">

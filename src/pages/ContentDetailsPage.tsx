@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
+import { deliveryOrder, getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
+import type { DrmConfig } from '@digitalvirgo/drm-player';
+import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
 import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm } from '../utils/assets';
@@ -18,10 +21,15 @@ interface RelatedRow {
 export default function ContentDetailsPage() {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [content, setContent] = useState<ContentItem | null>(null);
   const [related, setRelated] = useState<RelatedRow[]>([]);
   const [showPlayer, setShowPlayer] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [drmLoading, setDrmLoading] = useState(false);
+  const [drmError, setDrmError] = useState<string | null>(null);
+  const [playerUrl, setPlayerUrl] = useState<string | null>(null);
+  const [drmConfig, setDrmConfig] = useState<DrmConfig | undefined>();
   const { ref, focusKey, focusSelf } = useFocusable({});
 
   useEffect(() => {
@@ -80,12 +88,58 @@ export default function ContentDetailsPage() {
   }, [navigate, showPlayer]);
 
   const isDrm = content ? getMainDeliveryDrm(content.deliveries) : false;
-  const drmConfig = useMemo(() => isDrm ? {
-    merchant: import.meta.env.VITE_DRM_MERCHANT || 'six',
-    userId: import.meta.env.VITE_DRM_USER_ID || 'purchase',
-    sessionId: import.meta.env.VITE_DRM_SESSION_ID || 'sessionId',
-    authToken: import.meta.env.VITE_DRM_AUTH_TOKEN || undefined,
-  } : undefined, [isDrm]);
+
+  const handlePlay = useCallback(async () => {
+    if (!content || !contentId) return;
+
+    if (!isDrm) {
+      const mainUrl = getMainStreamUrl(content.deliveries);
+      const trailerUrl = getStreamUrl(content.deliveries);
+      setPlayerUrl(mainUrl || trailerUrl);
+      setDrmConfig(undefined);
+      setShowPlayer(true);
+      return;
+    }
+
+    if (!user) {
+      setDrmError('Login required for DRM content');
+      return;
+    }
+
+    setDrmLoading(true);
+    setDrmError(null);
+
+    try {
+      const order = await deliveryOrder(user.id, Number(contentId));
+      if (!order?.orderId) {
+        throw new Error('Could not obtain delivery order');
+      }
+
+      const tokenUrl = getMainStreamUrl(content.deliveries) ?? '';
+
+      const smartVideo = await getSmartVideoDrmConfig({
+        userId: user.id,
+        galaxyRef: Number(contentId),
+        tokenUrl,
+        orderId: order.orderId,
+      });
+
+      setPlayerUrl(smartVideo.stream);
+      setDrmConfig({
+        merchant: 'digitalvirgo',
+        userId: user.id,
+        sessionId: smartVideo.sessionId,
+        assetId: smartVideo.assets.stream,
+        authToken: smartVideo.drm.stream,
+      });
+      setShowPlayer(true);
+    } catch (err: any) {
+      console.error('DRM setup failed:', err);
+      setDrmError(err.message || 'Failed to load DRM content');
+    } finally {
+      setDrmLoading(false);
+    }
+  }, [content, contentId, isDrm, user]);
 
   if (loading) return <LoadingSpinner />;
   if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
@@ -93,17 +147,14 @@ export default function ContentDetailsPage() {
   const bg = getArtBackground(content.assets);
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
-
-  // TODO: remove demo override once real DRM credentials are wired
-  const DEMO_DRM_STREAM = 'https://content.players.castlabs.com/demos/drm-agent/manifest.mpd';
-  const playUrl = isDrm ? DEMO_DRM_STREAM : (mainUrl || trailerUrl);
+  const hasPlayableContent = !!(mainUrl || trailerUrl);
 
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref}>
-        {showPlayer && playUrl && (
+        {showPlayer && playerUrl && (
           <VideoPlayer
-            url={playUrl}
+            url={playerUrl}
             poster={bg ?? undefined}
             drm={drmConfig}
             onClose={() => setShowPlayer(false)}
@@ -133,9 +184,15 @@ export default function ContentDetailsPage() {
                   {content.content_type}
                 </span>
               )}
+              {isDrm && !user && (
+                <p className="mb-2 text-sm text-yellow-400">Login required to play this content</p>
+              )}
+              {drmError && (
+                <p className="mb-2 text-sm text-red-400">{drmError}</p>
+              )}
               <div className="mt-4 flex gap-3">
-                {playUrl && (
-                  <PlayButton onPress={() => setShowPlayer(true)} />
+                {hasPlayableContent && (
+                  <PlayButton onPress={handlePlay} loading={drmLoading} />
                 )}
                 <BackButton onPress={() => navigate(-1)} />
               </div>
@@ -163,9 +220,9 @@ export default function ContentDetailsPage() {
   );
 }
 
-function PlayButton({ onPress }: { onPress: () => void }) {
+function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
   const btnRef = useRef<HTMLButtonElement>(null);
-  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress });
 
   useEffect(() => {
     if (focused && btnRef.current) {
@@ -179,15 +236,23 @@ function PlayButton({ onPress }: { onPress: () => void }) {
         (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
         (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
       }}
-      onClick={onPress}
-      className={`flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black transition-all duration-200 hover:bg-white/90 ${
+      onClick={loading ? undefined : onPress}
+      disabled={loading}
+      className={`flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black transition-all duration-200 hover:bg-white/90 disabled:opacity-60 ${
         focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
       }`}
     >
-      <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current">
-        <path d="M8 5v14l11-7z" />
-      </svg>
-      Play
+      {loading ? (
+        <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      )}
+      {loading ? 'Loading…' : 'Play'}
     </button>
   );
 }

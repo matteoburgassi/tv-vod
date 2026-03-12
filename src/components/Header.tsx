@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
   const [query, setQuery] = useState('');
@@ -56,7 +57,10 @@ export default function Header() {
         }`}
       >
         <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />
-        <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
+        <div className="flex items-center gap-4">
+          <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
+          <UserButton onArrowPress={handleArrowPress} />
+        </div>
       </header>
     </FocusContext.Provider>
   );
@@ -115,5 +119,32 @@ function SearchInput({
         className="w-40 bg-transparent text-sm text-white outline-none placeholder:text-white/30 sm:w-56"
       />
     </div>
+  );
+}
+
+function UserButton({ onArrowPress }: { onArrowPress: (direction: string) => boolean }) {
+  const { user, logout } = useAuth();
+  const { ref, focused } = useFocusable({
+    onEnterPress: logout,
+    onArrowPress,
+  });
+
+  const displayName = user?.firstname || user?.email?.split('@')[0] || 'Guest';
+
+  return (
+    <button
+      ref={ref}
+      onClick={logout}
+      className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 ${
+        focused
+          ? 'border-sky-400 bg-white/10 ring-2 ring-sky-400/50'
+          : 'border-white/15 bg-white/5'
+      }`}
+    >
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/20 text-xs font-bold text-sky-400">
+        {displayName.charAt(0).toUpperCase()}
+      </div>
+      <span className="text-sm text-white/80">{displayName}</span>
+    </button>
   );
 }

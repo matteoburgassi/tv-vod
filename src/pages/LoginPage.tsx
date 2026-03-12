@@ -1,0 +1,226 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
+import { useAuth } from '../contexts/AuthContext';
+import { loginWithEmail } from '../services/auth';
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { ref, focusKey } = useFocusable({
+    focusKey: 'login-page',
+    isFocusBoundary: true,
+    trackChildren: true,
+  });
+
+  useEffect(() => {
+    setFocus('login-email');
+  }, []);
+
+  const handleLogin = useCallback(async () => {
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const user = await loginWithEmail(email, password);
+      login(user);
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [email, password, login]);
+
+  return (
+    <FocusContext.Provider value={focusKey}>
+      <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+        <div className="w-full max-w-lg px-8">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
+            <p className="mt-3 text-lg text-white/50">Sign in to your account</p>
+          </div>
+
+          <div className="space-y-6">
+            <FocusableInput
+              focusKey="login-email"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="your@email.com"
+              nextFocus="login-password"
+            />
+
+            <FocusableInput
+              focusKey="login-password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="••••••••"
+              prevFocus="login-email"
+              nextFocus="login-submit"
+              onSubmit={handleLogin}
+            />
+
+            {error && (
+              <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
+                {error}
+              </div>
+            )}
+
+            <LoginButton
+              loading={loading}
+              onPress={handleLogin}
+            />
+
+            <SkipButton />
+          </div>
+        </div>
+      </div>
+    </FocusContext.Provider>
+  );
+}
+
+function FocusableInput({
+  focusKey,
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  prevFocus,
+  nextFocus,
+  onSubmit,
+}: {
+  focusKey: string;
+  label: string;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  prevFocus?: string;
+  nextFocus?: string;
+  onSubmit?: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: () => inputRef.current?.focus(),
+    onArrowPress: (direction: string) => {
+      if (direction === 'down' && nextFocus) {
+        setFocus(nextFocus);
+        return false;
+      }
+      if (direction === 'up' && prevFocus) {
+        setFocus(prevFocus);
+        return false;
+      }
+      return true;
+    },
+  });
+
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-white/70">{label}</label>
+      <div
+        ref={ref}
+        className={`rounded-xl border-2 transition-all ${
+          focused
+            ? 'border-white/60 bg-white/10 shadow-lg shadow-white/5'
+            : 'border-white/10 bg-white/5'
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && onSubmit) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          placeholder={placeholder}
+          className="w-full bg-transparent px-5 py-4 text-lg text-white placeholder-white/30 outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+function LoginButton({ loading, onPress }: { loading: boolean; onPress: () => void }) {
+  const { ref, focused } = useFocusable({
+    focusKey: 'login-submit',
+    onEnterPress: onPress,
+    onArrowPress: (direction: string) => {
+      if (direction === 'up') {
+        setFocus('login-password');
+        return false;
+      }
+      if (direction === 'down') {
+        setFocus('login-skip');
+        return false;
+      }
+      return false;
+    },
+  });
+
+  return (
+    <button
+      ref={ref}
+      onClick={onPress}
+      disabled={loading}
+      className={`w-full rounded-xl py-4 text-lg font-semibold transition-all ${
+        focused
+          ? 'bg-white text-black shadow-lg shadow-white/20 scale-[1.02]'
+          : 'bg-white/20 text-white hover:bg-white/30'
+      } ${loading ? 'opacity-60' : ''}`}
+    >
+      {loading ? 'Signing in...' : 'Sign In'}
+    </button>
+  );
+}
+
+function SkipButton() {
+  const { login } = useAuth();
+  const { ref, focused } = useFocusable({
+    focusKey: 'login-skip',
+    onEnterPress: () => {
+      login({
+        id: 'guest',
+        subscribed: false,
+      });
+    },
+    onArrowPress: (direction: string) => {
+      if (direction === 'up') {
+        setFocus('login-submit');
+        return false;
+      }
+      return false;
+    },
+  });
+
+  return (
+    <button
+      ref={ref}
+      className={`w-full rounded-xl py-3 text-sm transition-all ${
+        focused
+          ? 'bg-white/10 text-white'
+          : 'text-white/40 hover:text-white/60'
+      }`}
+    >
+      Continue as Guest
+    </button>
+  );
+}

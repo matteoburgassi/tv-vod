@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    exclude: ['@digitalvirgo/drm-player'],
+    include: ['blueimp-md5'],
+  },
   server: {
     proxy: {
       '/api/user': {

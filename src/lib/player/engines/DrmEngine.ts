@@ -65,7 +65,13 @@ export class DrmEngine implements PlayerEngine {
         await this.player.release();
       }
 
-      this.player = new clpp.Player(this.videoEl);
+      const playerConfig: any = {};
+      const sdkLicense = import.meta.env.VITE_CASTLABS_LICENSE;
+      if (sdkLicense) {
+        playerConfig.license = sdkLicense;
+      }
+
+      this.player = new clpp.Player(this.videoEl, playerConfig);
       this.bindPlayerEvents(clpp);
 
       const drmEnv = import.meta.env.VITE_DRM_ENV || 'DRMtoday_STAGING';

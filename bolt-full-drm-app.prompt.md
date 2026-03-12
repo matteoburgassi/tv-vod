@@ -1,6 +1,6 @@
 # Galaxy TV VOD App — Full Build Prompt for Bolt.new
 
-Build a TV-optimized VOD streaming app with React, targeting smart TVs (LG webOS, Samsung Tizen, Android TV) and browsers. The app uses D-pad/remote spatial navigation, connects to the Galaxy content API, authenticates users via DVE User API, and plays DRM-protected content via a pre-built CastLabs PRESTOplay SDK wrapper.
+Build a TV-optimized VOD streaming app with React, targeting smart TVs (LG webOS, Samsung Tizen, Android TV) and browsers. The app uses D-pad/remote spatial navigation, connects to the Galaxy content API, authenticates users via DVE User API, and plays DRM-protected content. The player SDK and DRM services are provided by the `@digitalvirgo/drm-player` npm package.
 
 ---
 
@@ -9,7 +9,7 @@ Build a TV-optimized VOD streaming app with React, targeting smart TVs (LG webOS
 - React 19, TypeScript, Vite 7, Tailwind CSS v4
 - `@noriginmedia/norigin-spatial-navigation` for D-pad navigation
 - `react-router-dom` for routing
-- `blueimp-md5` for SmartVideo API secure parameter
+- `@digitalvirgo/drm-player` for player facade + DRM services (CastLabs PRESTOplay, SmartVideo, auth)
 
 ---
 
@@ -17,7 +17,7 @@ Build a TV-optimized VOD streaming app with React, targeting smart TVs (LG webOS
 
 ```
 src/
-├── main.tsx                    # Entry point
+├── main.tsx                    # Entry point (configure drm-player here)
 ├── App.tsx                     # Router + spatial nav init + auth gate
 ├── index.css                   # Tailwind + global styles
 ├── constants/
@@ -26,13 +26,10 @@ src/
 │   └── AuthContext.tsx          # Auth state (user, login, logout)
 ├── types/
 │   ├── api.ts                  # Galaxy API types
-│   ├── user.ts                 # User type
 │   ├── tizen.d.ts              # Tizen global type
 │   └── webos.d.ts              # webOS global type
 ├── services/
-│   ├── api.ts                  # Galaxy content API
-│   ├── auth.ts                 # DVE User API (login, account, delivery order)
-│   └── smartvideo.ts           # SmartVideo DRM API
+│   └── api.ts                  # Galaxy content API
 ├── utils/
 │   ├── assets.ts               # Image/stream URL extraction
 │   ├── keyMap.ts               # TV remote key mapping
@@ -45,23 +42,44 @@ src/
 │   ├── VideoPlayer.tsx         # Full-screen player with controls
 │   ├── ExitDialog.tsx          # Exit confirmation modal
 │   └── LoadingSpinner.tsx      # Centered loading spinner
-├── pages/
-│   ├── HomePage.tsx            # Hero + category rows
-│   ├── ContentDetailsPage.tsx  # Details, trailer, play (DRM or native)
-│   ├── SearchPage.tsx          # Search with results grid
-│   └── LoginPage.tsx           # Email/password login, guest mode
-└── lib/
-    └── player/                 # PRE-BUILT — DO NOT MODIFY
-        ├── index.ts
-        ├── types.ts
-        ├── usePlayer.ts
-        ├── PlayerCore.ts
-        └── engines/
-            ├── NativeEngine.ts
-            └── DrmEngine.ts
+└── pages/
+    ├── HomePage.tsx            # Hero + category rows
+    ├── ContentDetailsPage.tsx  # Details, trailer, play (DRM or native)
+    ├── SearchPage.tsx          # Search with results grid
+    └── LoginPage.tsx           # Email/password login, guest mode
 ```
 
-`vendor/castlabs-prestoplay/` — PRE-BUILT SDK binary, DO NOT MODIFY.
+Note: There is NO `src/lib/player/` or `vendor/` directory. The player and DRM services come from the `@digitalvirgo/drm-player` package.
+
+---
+
+## package.json
+
+```json
+{
+  "name": "galaxy-tv",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npx vite",
+    "build": "npx tsc -b && npx vite build",
+    "preview": "npx vite preview"
+  },
+  "dependencies": {
+    "@digitalvirgo/drm-player": "github:matteoburgassi/drm-player",
+    "@noriginmedia/norigin-spatial-navigation": "^2.3.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "@vitejs/plugin-react": "^5.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1"
+  }
+}
+```
 
 ---
 
@@ -80,9 +98,35 @@ VITE_LANGUAGE_CODE=fr
 
 VITE_CASTLABS_LICENSE=
 VITE_DRM_ENV=DRMtoday
+```
 
-VITE_AUTH_LOGIN=PlayVodMax_Ios
-VITE_AUTH_SECRET=912ai6xn
+---
+
+## Entry Point (`src/main.tsx`)
+
+```tsx
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { configure } from '@digitalvirgo/drm-player';
+import '@digitalvirgo/drm-player/styles.css';
+import App from './App';
+import { platformInit } from './utils/platformInit';
+import { SERVICE_ID } from './constants/api';
+import './index.css';
+
+configure({
+  serviceId: SERVICE_ID,
+  castlabsLicense: import.meta.env.VITE_CASTLABS_LICENSE || undefined,
+  drmEnv: import.meta.env.VITE_DRM_ENV || undefined,
+});
+
+platformInit();
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
 ```
 
 ---
@@ -91,17 +135,11 @@ VITE_AUTH_SECRET=912ai6xn
 
 ```ts
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@castlabs/prestoplay': resolve(__dirname, 'vendor/castlabs-prestoplay'),
-    },
-  },
   server: {
     proxy: {
       '/api/user': {
@@ -160,22 +198,9 @@ body {
   overflow: hidden;
   cursor: none;
 }
-
-.player-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.player-container video {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-}
 ```
+
+The `.player-container` CSS is provided by `@digitalvirgo/drm-player/styles.css` (imported in `main.tsx`).
 
 ---
 
@@ -238,10 +263,16 @@ export interface ApiResponse<T> {
 }
 ```
 
-### User (`src/types/user.ts`)
+### User type
+
+The `User` type is exported by the package:
 
 ```ts
-export interface User {
+import type { User } from '@digitalvirgo/drm-player';
+```
+
+```ts
+interface User {
   id: string;
   email?: string;
   msisdn?: string;
@@ -411,6 +442,8 @@ Header down -> Hero; Hero down -> first content row; Content rows chain to each 
 ### Auth Context (`src/contexts/AuthContext.tsx`)
 
 ```tsx
+import type { User } from '@digitalvirgo/drm-player';
+
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
@@ -422,35 +455,17 @@ interface AuthContextValue {
 
 Persists user to `localStorage` key `tv_vod_user`. Wrap app in `<AuthProvider>`.
 
-### Auth Service (`src/services/auth.ts`)
+### Login
 
-Uses DVE User API with Basic Auth (`PlayVodMax_Ios:912ai6xn`).
-
-In dev, requests go through Vite proxy: `/api/user` -> `userv1.dv-content.io`.
-
-#### Password hashing (dvHash)
-
-The API requires a specific password hash:
+Use `loginWithEmail` from the package:
 
 ```ts
-const SALT = 'f5c028c81f560e6cd05c8513b96062b0'; // precomputed, fixed
-const SALT_PREFIX = SALT.slice(0, 10);
-const SALT_SUFFIX = SALT.slice(10, 32);
+import { loginWithEmail } from '@digitalvirgo/drm-player';
 
-async function dvHash(password: string): Promise<string> {
-  // SHA1(saltPrefix + password + saltSuffix) using crypto.subtle
-}
+const user = await loginWithEmail(email, password);
 ```
 
-#### Endpoints
-
-| Function | Method | Path | Key Params |
-|----------|--------|------|------------|
-| `loginWithEmail(email, password)` | POST | `/login/dve` | `service_id`, `login`, `password_dve` |
-| `fetchAccountInfo(userId)` | GET | `/accountinfo/all` | `user_id`, `service_id`, `force_cache=1` |
-| `deliveryOrder(userId, contentRef, orderType=1)` | GET | `/delivery/order` | `user_id`, `service_id`, `content_ref`, `order_type` |
-
-Login response: `{ data: { user_id, userdve_ticket } }`. Delivery order response: `{ data: { do_id } }`.
+The package handles password hashing (dvHash), DVE User API calls, and account info fetching internally. It uses the `serviceId`, `authLogin`, `authSecret`, and `authHost` from `configure()`.
 
 ### Login Page (`src/pages/LoginPage.tsx`)
 
@@ -464,57 +479,13 @@ Show when `!isAuthenticated` (gate in `App.tsx`, not a route).
 
 ---
 
-## SmartVideo DRM API (`src/services/smartvideo.ts`)
-
-Fetches DRM stream URL and tokens. In dev, proxied via `/api/smartvideo`.
-
-```ts
-import md5 from 'blueimp-md5';
-
-function secureParam(pub: number): string {
-  return md5(`${pub}drmPrivateKey4androidclient`);
-}
-```
-
-Endpoint: `GET /delivery`
-
-| Param | Value |
-|-------|-------|
-| `is_download` | `0` |
-| `method` | `getvideodrmmobile` |
-| `user` | `clientdrmandroid` |
-| `kliento` | `1` |
-| `user_id` | logged-in user ID |
-| `pub` | `Date.now()` |
-| `website` | `www.playvod.fr` |
-| `idm` | `9004` |
-| `secure` | `md5(pub + "drmPrivateKey4androidclient")` |
-| `galaxy_ref` | content ID |
-| `token_url` | `mainDelivery.url` from Galaxy |
-| `order_id` | `do_id` from delivery order |
-
-Response (`SmartVideoConfig`):
-
-```ts
-{
-  stream: string;      // actual playable stream URL
-  sessionId: string;   // DRM session ID
-  drm: { stream: string; ... };   // drm.stream = auth token
-  assets: { stream: string; ... }; // assets.stream = asset ID
-  drm_end: string;
-  drm_view: number;
-}
-```
-
----
-
-## Player SDK (PRE-BUILT — DO NOT MODIFY `src/lib/player/`)
+## Player SDK (from `@digitalvirgo/drm-player`)
 
 ### Public API
 
 ```ts
-import { usePlayer } from '../lib/player';
-import type { DrmConfig, PlayRequest, PlayerState } from '../lib/player';
+import { usePlayer, PLAYER_CONTAINER_CLASS } from '@digitalvirgo/drm-player';
+import type { DrmConfig, PlayRequest, PlayerState } from '@digitalvirgo/drm-player';
 
 const { containerRef, state, play, pause, resume, seek } = usePlayer();
 ```
@@ -522,7 +493,7 @@ const { containerRef, state, play, pause, resume, seek } = usePlayer();
 ### Usage in VideoPlayer
 
 ```tsx
-<div ref={containerRef} className="player-container h-full w-full" />
+<div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full`} />
 ```
 
 ### Non-DRM playback
@@ -556,11 +527,34 @@ When the Play button is pressed:
 1. Check `getMainDeliveryDrm(content.deliveries)` — if false, play directly with `getMainStreamUrl()` or `getStreamUrl()` (trailer fallback)
 2. If DRM and no logged-in user, show "Login required" message
 3. If DRM and logged in:
-   a. Call `deliveryOrder(user.id, contentId)` -> get `orderId`
-   b. Call `getSmartVideoDrmConfig({ userId, galaxyRef, tokenUrl, orderId })` -> get stream + tokens
-   c. Set `playerUrl = smartVideo.stream`
-   d. Set `drmConfig = { merchant: 'digitalvirgo', userId, sessionId, assetId, authToken }`
-   e. Show VideoPlayer with `url={playerUrl}` and `drm={drmConfig}`
+
+```ts
+import { deliveryOrder, getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
+import type { DrmConfig } from '@digitalvirgo/drm-player';
+
+// a. Get delivery order
+const order = await deliveryOrder(user.id, Number(contentId));
+
+// b. Get DRM config from SmartVideo API
+const tokenUrl = getMainStreamUrl(content.deliveries) ?? '';
+const smartVideo = await getSmartVideoDrmConfig({
+  userId: user.id,
+  galaxyRef: Number(contentId),
+  tokenUrl,
+  orderId: order.orderId,
+});
+
+// c. Play with DRM config
+setPlayerUrl(smartVideo.stream);
+setDrmConfig({
+  merchant: 'digitalvirgo',
+  userId: user.id,
+  sessionId: smartVideo.sessionId,
+  assetId: smartVideo.assets.stream,
+  authToken: smartVideo.drm.stream,
+});
+setShowPlayer(true);
+```
 
 Show loading state during DRM setup, error state on failure.
 
@@ -593,7 +587,7 @@ Show loading state during DRM setup, error state on failure.
 ### LoginPage
 
 - Centered card with email/password inputs
-- Login button calls `loginWithEmail`, stores user via `useAuth().login()`
+- Login button calls `loginWithEmail` (from the package), stores user via `useAuth().login()`
 - "Continue as Guest" skips login
 - Loading spinner during API call, error message on failure
 - All inputs and buttons are focusable with D-pad
@@ -649,11 +643,6 @@ function App() {
 5. The player SDK handles all CastLabs complexity — just call `play()` with the right config
 6. All external API calls need Vite proxy in dev to avoid CORS
 7. Use `npx` prefix for scripts in `package.json` (for Bolt.new WebContainer compatibility)
-
-```json
-"scripts": {
-  "dev": "npx vite",
-  "build": "npx tsc -b && npx vite build",
-  "preview": "npx vite preview"
-}
-```
+8. Import `User`, `loginWithEmail`, `deliveryOrder`, `getSmartVideoDrmConfig`, `usePlayer`, `PLAYER_CONTAINER_CLASS`, and DRM types from `@digitalvirgo/drm-player` — **not** from local files
+9. Call `configure()` in `main.tsx` **before** rendering the app
+10. Import `@digitalvirgo/drm-player/styles.css` in `main.tsx` for player container styles

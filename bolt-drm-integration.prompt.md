@@ -1,25 +1,48 @@
 # DRM Player Integration — Bolt.new Prompt
 
-This prompt adds DRM-protected video playback to the existing TV VOD app. The player SDK (CastLabs PRESTOplay) is already wrapped in a facade — you only need to wire the UI and API calls.
+This prompt adds DRM-protected video playback to the existing TV VOD app. The player SDK and DRM services are provided by the `@digitalvirgo/drm-player` npm package — you only need to wire the UI and API calls.
 
 ---
 
-## Pre-built SDK (DO NOT modify)
+## Package Installation
 
-The following directories are pre-built and must not be edited:
+Add to `package.json` dependencies:
 
-- `src/lib/player/` — Player SDK wrapper (hook, core, engines)
-- `vendor/castlabs-prestoplay/` — CastLabs PRESTOplay SDK binary
+```json
+"@digitalvirgo/drm-player": "github:matteoburgassi/drm-player"
+```
+
+Then `npm install`.
+
+---
+
+## Configuration
+
+Call `configure()` once at app startup (e.g. in `src/main.tsx`), **before** rendering:
+
+```ts
+import { configure } from '@digitalvirgo/drm-player';
+import '@digitalvirgo/drm-player/styles.css';
+import { SERVICE_ID } from './constants/api';
+
+configure({
+  serviceId: SERVICE_ID,
+  castlabsLicense: import.meta.env.VITE_CASTLABS_LICENSE || undefined,
+  drmEnv: import.meta.env.VITE_DRM_ENV || undefined,
+});
+```
+
+The `styles.css` import provides the `.player-container` CSS rules needed for proper video scaling.
 
 ---
 
 ## Player Hook API
 
-Import from `src/lib/player`:
+Import from `@digitalvirgo/drm-player`:
 
 ```ts
-import { usePlayer } from '../lib/player';
-import type { DrmConfig, PlayRequest, PlayerState } from '../lib/player';
+import { usePlayer, PLAYER_CONTAINER_CLASS } from '@digitalvirgo/drm-player';
+import type { DrmConfig, PlayRequest, PlayerState } from '@digitalvirgo/drm-player';
 ```
 
 ### usePlayer()
@@ -71,36 +94,16 @@ interface PlayerState {
 
 ---
 
-## Required CSS
-
-Add to `src/index.css`:
-
-```css
-.player-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.player-container video {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-}
-```
-
----
-
 ## VideoPlayer Component
 
 The `VideoPlayer` component renders a full-screen overlay with the player and controls.
 
 ```tsx
+import { usePlayer, PLAYER_CONTAINER_CLASS } from '@digitalvirgo/drm-player';
+
+// In the component:
 <div className="fixed inset-0 z-50 bg-black">
-  <div ref={containerRef} className="player-container h-full w-full" />
+  <div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full`} />
   {/* Controls overlay on top */}
 </div>
 ```
@@ -149,12 +152,12 @@ play({ url: streamUrl, autoplay: true });
 
 ### DRM path (requires logged-in user)
 
-Three API calls in sequence:
+Three API calls in sequence, using functions from the package:
 
 #### Step 1 — Get delivery order
 
 ```ts
-import { deliveryOrder } from '../services/auth';
+import { deliveryOrder } from '@digitalvirgo/drm-player';
 
 const order = await deliveryOrder(user.id, Number(contentId));
 // order.orderId is the "do_id" from the API
@@ -165,7 +168,7 @@ Endpoint: `GET /delivery/order` on User API (`userv1.dv-content.io`).
 #### Step 2 — Get DRM config from SmartVideo API
 
 ```ts
-import { getSmartVideoDrmConfig } from '../services/smartvideo';
+import { getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
 
 const tokenUrl = getMainStreamUrl(content.deliveries) ?? '';
 
@@ -204,6 +207,9 @@ play({
 ### Complete handlePlay example
 
 ```ts
+import { deliveryOrder, getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
+import type { DrmConfig } from '@digitalvirgo/drm-player';
+
 const handlePlay = useCallback(async () => {
   if (!content || !contentId) return;
 
@@ -259,7 +265,7 @@ const handlePlay = useCallback(async () => {
 
 ## Vite Proxy Configuration
 
-Add the SmartVideo API proxy to `vite.config.ts`:
+The package defaults to `/api/user` and `/api/smartvideo` as API hosts (suitable for dev proxy). Add these to `vite.config.ts`:
 
 ```ts
 server: {
@@ -282,28 +288,16 @@ server: {
 
 ---
 
-## Services Reference (already implemented)
+## Services Reference (provided by the package)
 
-### `src/services/smartvideo.ts`
+All these are imported from `@digitalvirgo/drm-player`:
 
-- `getSmartVideoDrmConfig(params)` — calls SmartVideo API with MD5 secure param
-- Returns `SmartVideoConfig { stream, sessionId, drm, assets, drm_end, drm_view }`
-
-### `src/services/auth.ts`
-
-- `loginWithEmail(email, password)` — DVE User API login with dvHash
-- `fetchAccountInfo(userId)` — get user details
-- `deliveryOrder(userId, contentRef, orderType?)` — get delivery order (`do_id`)
-
----
-
-## Dependencies
-
-These must be in `package.json`:
-
-```json
-"blueimp-md5": "^2.19.0"
-```
+| Function | Description |
+|----------|-------------|
+| `loginWithEmail(email, password)` | DVE User API login with dvHash |
+| `fetchAccountInfo(userId)` | Get user details |
+| `deliveryOrder(userId, contentRef, orderType?)` | Get delivery order (`do_id`) |
+| `getSmartVideoDrmConfig(params)` | SmartVideo API — returns stream URL + DRM tokens |
 
 ---
 
@@ -312,7 +306,14 @@ These must be in `package.json`:
 ```
 VITE_CASTLABS_LICENSE=           # CastLabs SDK license key (localhost always permitted)
 VITE_DRM_ENV=DRMtoday            # "DRMtoday" for production, "DRMtoday_STAGING" for staging
-VITE_AUTH_HOST=                   # leave empty in dev (uses /api/user proxy)
-VITE_AUTH_LOGIN=PlayVodMax_Ios
-VITE_AUTH_SECRET=912ai6xn
+```
+
+Auth credentials are configured via `configure()` (defaults: `PlayVodMax_Ios` / `912ai6xn`). Override with:
+
+```ts
+configure({
+  serviceId: SERVICE_ID,
+  authLogin: 'CustomLogin',
+  authSecret: 'CustomSecret',
+});
 ```

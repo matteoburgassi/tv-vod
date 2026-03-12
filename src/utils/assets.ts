@@ -48,8 +48,14 @@ export function getStreamUrl(deliveries?: { ba?: Record<string, { url: string }[
   return pickBestUrl(deliveries.ba);
 }
 
-export function getMainStreamUrl(deliveries?: { mainDelivery?: { url: string; drm: boolean } }): string | null {
+export function getMainStreamUrl(deliveries?: { mainDelivery?: { url: string } }): string | null {
   if (!deliveries?.mainDelivery) return null;
-  if (deliveries.mainDelivery.drm) return null;
   return deliveries.mainDelivery.url || null;
+}
+
+export function getMainDeliveryDrm(deliveries?: { mainDelivery?: { type?: string; drm?: boolean } }): boolean {
+  if (!deliveries?.mainDelivery) return false;
+  const d = deliveries.mainDelivery;
+  if (d.type?.toLowerCase().includes('drm')) return true;
+  return d.drm ?? false;
 }

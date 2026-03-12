@@ -12,11 +12,18 @@ interface HeroProps {
 export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
-  const { ref, focusKey } = useFocusable({
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { ref, focusKey, hasFocusedChild } = useFocusable({
     focusKey: 'hero',
     isFocusBoundary: false,
     trackChildren: true,
   });
+
+  useEffect(() => {
+    if (hasFocusedChild && heroRef.current) {
+      heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hasFocusedChild]);
 
   const handleArrowPress = useCallback((direction: string) => {
     if (direction === 'up') {
@@ -46,7 +53,13 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="relative h-[70vh] min-h-[400px] w-full overflow-hidden">
+      <div
+        ref={(node) => {
+          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          (heroRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        }}
+        className="relative h-[70vh] min-h-[400px] w-full overflow-hidden"
+      >
         {bg && (
           <img
             src={bg}

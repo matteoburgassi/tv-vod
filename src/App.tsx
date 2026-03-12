@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import ContentDetailsPage from './pages/ContentDetailsPage';
 import SearchPage from './pages/SearchPage';
+import LoginPage from './pages/LoginPage';
 
 init({
   debug: false,
@@ -12,10 +14,15 @@ init({
 });
 
 function AppLayout() {
+  const { isAuthenticated } = useAuth();
   const { ref, focusKey } = useFocusable({
     isFocusBoundary: false,
     trackChildren: true,
   });
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   return (
     <FocusContext.Provider value={focusKey}>
@@ -36,7 +43,9 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppLayout />
+      <AuthProvider>
+        <AppLayout />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

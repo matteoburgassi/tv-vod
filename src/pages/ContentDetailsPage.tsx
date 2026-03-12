@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
@@ -91,12 +91,12 @@ export default function ContentDetailsPage() {
   const DEMO_DRM_STREAM = 'https://content.players.castlabs.com/demos/drm-agent/manifest.mpd';
   const playUrl = isDrm ? DEMO_DRM_STREAM : (mainUrl || trailerUrl);
 
-  const drmConfig = isDrm ? {
+  const drmConfig = useMemo(() => isDrm ? {
     merchant: import.meta.env.VITE_DRM_MERCHANT || 'six',
     userId: import.meta.env.VITE_DRM_USER_ID || 'purchase',
     sessionId: import.meta.env.VITE_DRM_SESSION_ID || 'sessionId',
     authToken: import.meta.env.VITE_DRM_AUTH_TOKEN || undefined,
-  } : undefined;
+  } : undefined, [isDrm]);
 
   return (
     <FocusContext.Provider value={focusKey}>

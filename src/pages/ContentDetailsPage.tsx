@@ -79,24 +79,24 @@ export default function ContentDetailsPage() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [navigate, showPlayer]);
 
-  if (loading) return <LoadingSpinner />;
-  if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
-
-  const bg = getArtBackground(content.assets);
-  const trailerUrl = getStreamUrl(content.deliveries);
-  const mainUrl = getMainStreamUrl(content.deliveries);
-  const isDrm = getMainDeliveryDrm(content.deliveries);
-
-  // TODO: remove demo override once real DRM credentials are wired
-  const DEMO_DRM_STREAM = 'https://content.players.castlabs.com/demos/drm-agent/manifest.mpd';
-  const playUrl = isDrm ? DEMO_DRM_STREAM : (mainUrl || trailerUrl);
-
+  const isDrm = content ? getMainDeliveryDrm(content.deliveries) : false;
   const drmConfig = useMemo(() => isDrm ? {
     merchant: import.meta.env.VITE_DRM_MERCHANT || 'six',
     userId: import.meta.env.VITE_DRM_USER_ID || 'purchase',
     sessionId: import.meta.env.VITE_DRM_SESSION_ID || 'sessionId',
     authToken: import.meta.env.VITE_DRM_AUTH_TOKEN || undefined,
   } : undefined, [isDrm]);
+
+  if (loading) return <LoadingSpinner />;
+  if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
+
+  const bg = getArtBackground(content.assets);
+  const trailerUrl = getStreamUrl(content.deliveries);
+  const mainUrl = getMainStreamUrl(content.deliveries);
+
+  // TODO: remove demo override once real DRM credentials are wired
+  const DEMO_DRM_STREAM = 'https://content.players.castlabs.com/demos/drm-agent/manifest.mpd';
+  const playUrl = isDrm ? DEMO_DRM_STREAM : (mainUrl || trailerUrl);
 
   return (
     <FocusContext.Provider value={focusKey}>

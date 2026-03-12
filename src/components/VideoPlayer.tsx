@@ -46,19 +46,14 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     playerSeek(ratio * playerState.duration);
   }, [playerSeek, playerState.duration]);
 
-  const playedRef = useRef(false);
   useEffect(() => {
-    if (!playedRef.current) {
-      playedRef.current = true;
-      play({ url, poster, drm, autoplay: true });
-    }
+    play({ url, poster, drm, autoplay: true });
     resetHideTimer();
     setFocus('player-back');
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [url, poster, drm, play, resetHideTimer]);
 
   useEffect(() => {
     if (playerState.ended) onClose();

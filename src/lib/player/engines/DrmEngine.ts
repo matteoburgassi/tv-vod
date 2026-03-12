@@ -108,6 +108,7 @@ export class DrmEngine implements PlayerEngine {
 
       await this.player.load(config);
     } catch (err: any) {
+      if (this.isIgnorableError(err)) return;
       const message = this.mapError(err);
       this.updateState({ error: message, loading: false, playing: false });
     }
@@ -189,6 +190,7 @@ export class DrmEngine implements PlayerEngine {
     });
 
     this.player.on(clpp.events.ERROR, (e: any) => {
+      if (this.isIgnorableError(e.detail)) return;
       const message = this.mapError(e.detail);
       this.updateState({ error: message, loading: false, playing: false });
     });
@@ -214,6 +216,13 @@ export class DrmEngine implements PlayerEngine {
     // Galaxy DRM proxy URLs (.drm) serve DASH manifests
     if (lower.includes('.drm')) return 'dash';
     return 'dash';
+  }
+
+  private isIgnorableError(err: any): boolean {
+    const msg = String(err?.message ?? err ?? '');
+    if (msg.includes('interrupted')) return true;
+    if (msg.includes('AbortError')) return true;
+    return false;
   }
 
   private mapError(err: any): string {

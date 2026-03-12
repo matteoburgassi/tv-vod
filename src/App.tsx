@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
@@ -42,10 +42,10 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <AppLayout />
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

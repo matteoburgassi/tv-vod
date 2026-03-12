@@ -9,6 +9,10 @@ import './index.css';
 
 configure({
   serviceId: SERVICE_ID,
+  authHost: import.meta.env.VITE_AUTH_HOST || '/api/user',
+  smartVideoHost: import.meta.env.VITE_SMART_VIDEO_HOST || '/api/smartvideo',
+  authLogin: import.meta.env.VITE_AUTH_LOGIN || undefined,
+  authSecret: import.meta.env.VITE_AUTH_SECRET || undefined,
   castlabsLicense: import.meta.env.VITE_CASTLABS_LICENSE || undefined,
   drmEnv: import.meta.env.VITE_DRM_ENV || undefined,
 });

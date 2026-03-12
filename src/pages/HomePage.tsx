@@ -112,7 +112,7 @@ export default function HomePage() {
         {heroItems.length > 0 && (
           <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rowFocusKeys[0]} />
         )}
-        <div className="relative z-10 -mt-20 pb-20">
+        <div className="relative z-10 -mt-6 pb-20">
           {rows.map((row, i) => (
             <ContentRow
               key={row.rubric.rubric_id}

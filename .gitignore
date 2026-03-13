@@ -1,2 +1,11 @@
 node_modules/
+dist/
+output/
 .env
+
+# Android TV build artifacts
+platforms/android-tv/.gradle/
+platforms/android-tv/build/
+platforms/android-tv/app/build/
+platforms/android-tv/app/src/main/assets/
+platforms/android-tv/local.properties

@@ -8,9 +8,9 @@
     "build": "npx tsc -b && npx vite build",
     "lint": "npx eslint .",
     "preview": "npx vite preview",
-    "build:webos": "npm run build && bash scripts/build-webos.sh",
-    "build:tizen": "npm run build && bash scripts/build-tizen.sh",
-    "build:android": "npm run build && bash scripts/build-android.sh",
+    "build:webos": "bash scripts/build-webos.sh",
+    "build:tizen": "bash scripts/build-tizen.sh",
+    "build:android": "bash scripts/build-android.sh",
     "deploy:webos": "bash scripts/deploy-webos.sh",
     "deploy:tizen": "bash scripts/deploy-tizen.sh",
     "deploy:android": "bash scripts/deploy-android.sh"

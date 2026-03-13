@@ -4,20 +4,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLATFORM_DIR="$ROOT_DIR/platforms/tizen"
-BUILD_DIR="$ROOT_DIR/dist"
 OUTPUT_DIR="$ROOT_DIR/output/tizen"
 
-if [ ! -d "$BUILD_DIR" ]; then
-  echo "Error: dist/ not found. Run 'npm run build' first."
-  exit 1
-fi
-
-echo "==> Preparing Tizen package..."
+echo "==> Preparing Tizen package (hosted)..."
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
-cp -r "$BUILD_DIR"/* "$OUTPUT_DIR"/
 cp "$PLATFORM_DIR/config.xml" "$OUTPUT_DIR"/
+cp "$PLATFORM_DIR/index.html" "$OUTPUT_DIR"/
 
 for asset in icon.png; do
   if [ -f "$PLATFORM_DIR/$asset" ]; then

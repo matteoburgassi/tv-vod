@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
+        webView.loadUrl("https://tv-vod.blast.dvbuilder.com/")
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

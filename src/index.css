@@ -34,3 +34,8 @@ body {
   overflow: hidden;
   cursor: none;
 }
+
+.player-container,
+.player-container * {
+  background-color: black !important;
+}

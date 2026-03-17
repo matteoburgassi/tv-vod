@@ -1,26 +1,38 @@
-interface Env {
-  TARGET_ORIGIN: string;
-}
+interface Env {}
+
+const ROUTES: Record<string, string> = {
+  '/smartvideo/': 'https://smartvideo-api.galaxydve.com/',
+  '/auth/': 'https://userv1.dv-content.io/',
+};
 
 const ALLOWED_HEADERS = 'Content-Type, Authorization, X-Requested-With, Accept, Origin';
 
-function corsHeaders(): Headers {
-  const h = new Headers();
-  h.set('Access-Control-Allow-Origin', '*');
-  h.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  h.set('Access-Control-Allow-Headers', ALLOWED_HEADERS);
-  h.set('Access-Control-Max-Age', '86400');
-  return h;
+function addCorsHeaders(headers: Headers): Headers {
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', ALLOWED_HEADERS);
+  headers.set('Access-Control-Max-Age', '86400');
+  return headers;
+}
+
+function resolveTarget(pathname: string): { origin: string; rest: string } {
+  for (const [prefix, origin] of Object.entries(ROUTES)) {
+    if (pathname.startsWith(prefix)) {
+      return { origin, rest: pathname.slice(prefix.length) };
+    }
+  }
+  return { origin: 'https://smartvideo-api.galaxydve.com/', rest: pathname.replace(/^\//, '') };
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders() });
+      return new Response(null, { status: 204, headers: addCorsHeaders(new Headers()) });
     }
 
     const url = new URL(request.url);
-    const target = env.TARGET_ORIGIN + url.pathname + url.search;
+    const route = resolveTarget(url.pathname);
+    const target = route.origin + route.rest + url.search;
 
     const reqHeaders = new Headers(request.headers);
     reqHeaders.delete('host');
@@ -34,9 +46,7 @@ export default {
     });
 
     const responseHeaders = new Headers(upstream.headers);
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    responseHeaders.set('Access-Control-Allow-Headers', ALLOWED_HEADERS);
+    addCorsHeaders(responseHeaders);
 
     return new Response(upstream.body, {
       status: upstream.status,
@@ -44,4 +54,4 @@ export default {
       headers: responseHeaders,
     });
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler;

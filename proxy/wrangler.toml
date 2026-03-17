@@ -1,6 +1,3 @@
 name = "smartvideo-cors-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
-
-[vars]
-TARGET_ORIGIN = "https://smartvideo-api.galaxydve.com"

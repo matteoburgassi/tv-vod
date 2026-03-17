@@ -2,7 +2,11 @@ package com.digitalvirgo.galaxytv
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.view.KeyEvent
+import android.view.View
+import android.view.WindowManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -18,6 +22,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        )
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        )
+
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -27,8 +44,12 @@ class MainActivity : ComponentActivity() {
             settings.databaseEnabled = true
             settings.allowFileAccess = true
             settings.allowContentAccess = true
-            settings.loadWithOverviewMode = true
+            settings.loadWithOverviewMode = false
             settings.useWideViewPort = true
+
+            val dm = resources.displayMetrics
+            val scale = (dm.widthPixels.toDouble() / (1920.0 * dm.density) * 100.0).toInt()
+            setInitialScale(scale)
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(
@@ -37,7 +58,11 @@ class MainActivity : ComponentActivity() {
                 ): Boolean = false
             }
 
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onPermissionRequest(request: PermissionRequest?) {
+                    request?.grant(request.resources)
+                }
+            }
         }
 
         setContentView(webView)

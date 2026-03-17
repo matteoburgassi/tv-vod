@@ -132,7 +132,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref} className="fixed inset-0 z-50 bg-black" onMouseMove={resetHideTimer}>
-        <div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full`} />
+        <div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full bg-black`} />
 
         {playerState.loading && (
           <div className="absolute inset-0 flex items-center justify-center">

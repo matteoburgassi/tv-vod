@@ -26,7 +26,7 @@ function AppLayout() {
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="min-h-screen bg-[#0a0a0a]">
+      <div ref={ref} className="min-h-screen bg-[#120818]">
         <Header />
         <main>
           <Routes>

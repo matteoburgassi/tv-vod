@@ -53,7 +53,7 @@ export default function Header() {
       <header
         ref={ref}
         className={`fixed top-0 right-0 left-0 z-40 flex items-center justify-between px-12 py-4 transition-all duration-300 ${
-          scrolled ? 'bg-[#0a0a0a]/95 backdrop-blur-md' : 'bg-transparent'
+          scrolled ? 'bg-[#120818]/95 backdrop-blur-md' : 'bg-transparent'
         }`}
       >
         <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />

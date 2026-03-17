@@ -33,7 +33,7 @@ export default function ExitDialog({ onConfirm, onCancel }: ExitDialogProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <FocusContext.Provider value={focusKey}>
-        <div ref={ref} className="rounded-2xl bg-[#1a1a1a] px-12 py-10 text-center shadow-2xl">
+        <div ref={ref} className="rounded-2xl bg-[#1e1028] px-12 py-10 text-center shadow-2xl">
           <h2 className="mb-8 text-2xl font-semibold text-white">Exit App?</h2>
           <div className="flex items-center justify-center gap-6">
             <DialogButton focusKey="exit-yes" label="Yes" onPress={onConfirm} />

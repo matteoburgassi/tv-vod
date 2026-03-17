@@ -171,8 +171,8 @@ export default function ContentDetailsPage() {
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/50 to-[#120818]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
 
           <div className="relative z-10 flex min-h-[60vh] items-end px-12 pb-16 pt-32">
             <div className="max-w-2xl">

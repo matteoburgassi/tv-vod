@@ -41,7 +41,7 @@ export default function LoginPage() {
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+      <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
         <div className="w-full max-w-lg px-8">
           <div className="mb-12 text-center">
             <h1 className="text-4xl font-bold text-white">PlayVOD</h1>

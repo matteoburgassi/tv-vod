@@ -68,8 +68,8 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
             key={item.content_id}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
 
         <div className="absolute bottom-16 left-12 z-10 max-w-2xl">
           {titleImg ? (

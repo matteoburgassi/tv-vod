@@ -1,7 +1,7 @@
 node_modules/
 dist/
 output/
-.env
+# .env
 
 # Android TV build artifacts
 platforms/android-tv/.gradle/

@@ -35,25 +35,38 @@ body {
   cursor: none;
 }
 
-.player-container {
+video {
   background-color: black !important;
 }
 
-.player-container video {
-  background-color: black !important;
-}
-
-.player-container video::-webkit-media-controls,
-.player-container video::-webkit-media-controls-panel,
-.player-container video::-webkit-media-controls-start-playback-button {
+video::-webkit-media-controls {
   display: none !important;
   -webkit-appearance: none !important;
+  opacity: 0 !important;
 }
 
-.player-container .clpp-poster,
-.player-container .clpp-big-play,
-.player-container [class*="poster"],
-.player-container [class*="play-button"],
-.player-container [class*="big-play"] {
+video::-webkit-media-controls-panel {
   display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+}
+
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+}
+
+video::-webkit-media-controls-overlay-enclosure {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+.player-container {
+  background-color: black !important;
 }

@@ -56,6 +56,26 @@ class MainActivity : ComponentActivity() {
                     view: WebView?,
                     request: WebResourceRequest?
                 ): Boolean = false
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    val js = """
+                        (function(){
+                          var s=document.createElement('style');
+                          s.textContent='video,video *{background:black!important}video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit-media-controls-start-playback-button,video::-webkit-media-controls-overlay-enclosure,video::-webkit-media-controls-enclosure{display:none!important;opacity:0!important;-webkit-appearance:none!important}';
+                          document.head.appendChild(s);
+                          new MutationObserver(function(muts){
+                            muts.forEach(function(m){
+                              m.addedNodes.forEach(function(n){
+                                if(n.nodeName==='VIDEO'){n.removeAttribute('poster');n.controls=false;}
+                                if(n.querySelectorAll){n.querySelectorAll('video').forEach(function(v){v.removeAttribute('poster');v.controls=false;});}
+                              });
+                            });
+                          }).observe(document.body,{childList:true,subtree:true});
+                          document.querySelectorAll('video').forEach(function(v){v.removeAttribute('poster');v.controls=false;});
+                        })();
+                    """.trimIndent()
+                    view?.evaluateJavascript(js, null)
+                }
             }
 
             webChromeClient = object : WebChromeClient() {

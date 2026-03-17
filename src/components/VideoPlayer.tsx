@@ -47,7 +47,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   }, [playerSeek, playerState.duration]);
 
   useEffect(() => {
-    play({ url, poster, drm, autoplay: true });
+    play({ url, drm, autoplay: true });
     resetHideTimer();
     setFocus('player-back');
     return () => {

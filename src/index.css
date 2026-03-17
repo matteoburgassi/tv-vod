@@ -35,7 +35,25 @@ body {
   cursor: none;
 }
 
-.player-container,
-.player-container * {
+.player-container {
   background-color: black !important;
+}
+
+.player-container video {
+  background-color: black !important;
+}
+
+.player-container video::-webkit-media-controls,
+.player-container video::-webkit-media-controls-panel,
+.player-container video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
+.player-container .clpp-poster,
+.player-container .clpp-big-play,
+.player-container [class*="poster"],
+.player-container [class*="play-button"],
+.player-container [class*="big-play"] {
+  display: none !important;
 }

@@ -5,7 +5,7 @@
         version="1.0.0"
         viewmodes="maximized">
 
-  <name>Galaxy TV</name>
+  <name>PlayVOD</name>
   <icon src="icon.png"/>
   <content src="index.html"/>
 

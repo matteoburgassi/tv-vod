@@ -74,10 +74,10 @@ function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
       ref={ref}
       onClick={onPress}
       className={`text-2xl font-semibold tracking-tight text-white transition-all duration-200 ${
-        focused ? 'scale-105 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]' : ''
+        focused ? 'scale-105 drop-shadow-[0_0_8px_rgba(233,30,140,0.5)]' : ''
       }`}
     >
-      Galaxy<span className="text-sky-400">TV</span>
+      Play<span className="text-fuchsia-500">VOD</span>
     </button>
   );
 }
@@ -103,7 +103,7 @@ function SearchInput({
       ref={ref}
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 ${
         focused
-          ? 'border-sky-400 bg-white/10 ring-2 ring-sky-400/50'
+          ? 'border-fuchsia-500 bg-white/10 ring-2 ring-fuchsia-500/50'
           : 'border-white/15 bg-white/5'
       }`}
     >
@@ -137,11 +137,11 @@ function UserButton({ onArrowPress }: { onArrowPress: (direction: string) => boo
       onClick={logout}
       className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 ${
         focused
-          ? 'border-sky-400 bg-white/10 ring-2 ring-sky-400/50'
+          ? 'border-fuchsia-500 bg-white/10 ring-2 ring-fuchsia-500/50'
           : 'border-white/15 bg-white/5'
       }`}
     >
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/20 text-xs font-bold text-sky-400">
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-fuchsia-500/20 text-xs font-bold text-fuchsia-500">
         {displayName.charAt(0).toUpperCase()}
       </div>
       <span className="text-sm text-white/80">{displayName}</span>

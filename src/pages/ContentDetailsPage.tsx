@@ -285,11 +285,39 @@ function BackButton({ onPress }: { onPress: () => void }) {
 
 function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<import('hls.js').default | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const handleCanPlay = useCallback(() => {
     setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    const isHls = src.includes('.m3u8');
+
+    if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
+      import('hls.js').then(({ default: Hls }) => {
+        if (!Hls.isSupported()) return;
+        const hls = new Hls({ startLevel: -1 });
+        hlsRef.current = hls;
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+      });
+    } else {
+      video.src = src;
+    }
+
+    return () => {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [src]);
 
   return (
     <>
@@ -302,7 +330,6 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
       )}
       <video
         ref={videoRef}
-        src={src}
         autoPlay
         muted
         loop

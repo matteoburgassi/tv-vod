@@ -334,7 +334,6 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         muted
         loop
         playsInline
-        poster={poster ?? undefined}
         onCanPlay={handleCanPlay}
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
           loaded ? 'opacity-100' : 'opacity-0'

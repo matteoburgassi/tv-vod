@@ -1,8 +1,9 @@
-import { memo, useCallback, useRef, useEffect } from 'react';
+import { memo, useCallback, useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import { getCoverImage } from '../utils/assets';
+import { isImageCached, preloadImage } from '../utils/imageCache';
 
 interface ContentCardProps {
   item: ContentItem;
@@ -32,6 +33,12 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
   }, [focused]);
 
   const cover = getCoverImage(item.assets);
+  const [loaded, setLoaded] = useState(() => (cover ? isImageCached(cover) : false));
+
+  useEffect(() => {
+    if (!cover || loaded) return;
+    preloadImage(cover).then(() => setLoaded(true)).catch(() => {});
+  }, [cover, loaded]);
 
   return (
     <div
@@ -65,7 +72,10 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
             width={180}
             height={240}
             className="h-full w-full object-cover"
-            decoding="async"
+            style={{
+              opacity: loaded ? 1 : 0,
+              transition: 'opacity 150ms ease-out',
+            }}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-white/10">

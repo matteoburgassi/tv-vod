@@ -3,6 +3,8 @@ import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spat
 import { fetchContentsByCategory, fetchRubricList } from '../services/api';
 import { HERO_RUBRIC_ID, CATEGORY_RUBRIC_IDS } from '../constants/api';
 import { mapKeyEvent } from '../utils/keyMap';
+import { getCoverImage } from '../utils/assets';
+import { preloadImages } from '../utils/imageCache';
 import type { ContentItem, RubricItem } from '../types/api';
 import Hero from '../components/Hero';
 import ContentRow from '../components/ContentRow';
@@ -66,7 +68,18 @@ export default function HomePage() {
               return { rubric, items };
             }),
           );
-          rowData.push(...results.filter((r) => r.items.length > 0));
+          const validResults = results.filter((r) => r.items.length > 0);
+          rowData.push(...validResults);
+
+          const coverUrls: string[] = [];
+          for (const r of validResults) {
+            for (const item of r.items) {
+              const url = getCoverImage(item.assets);
+              if (url) coverUrls.push(url);
+            }
+          }
+          preloadImages(coverUrls);
+
           const snapshot = [...rowData];
           startTransition(() => {
             setRows(snapshot);

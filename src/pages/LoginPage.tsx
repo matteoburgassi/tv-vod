@@ -1,10 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { loginWithEmail } from '@digitalvirgo/drm-player';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string })?.returnTo ?? '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,6 +36,7 @@ export default function LoginPage() {
     try {
       const user = await loginWithEmail(email, password);
       login(user);
+      navigate(returnTo, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -82,7 +87,7 @@ export default function LoginPage() {
               onPress={handleLogin}
             />
 
-            <SkipButton />
+            <SkipButton returnTo={returnTo} />
           </div>
         </div>
       </div>
@@ -192,8 +197,9 @@ function LoginButton({ loading, onPress }: { loading: boolean; onPress: () => vo
   );
 }
 
-function SkipButton() {
+function SkipButton({ returnTo }: { returnTo: string }) {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const { ref, focused } = useFocusable({
     focusKey: 'login-skip',
     onEnterPress: () => {
@@ -201,6 +207,7 @@ function SkipButton() {
         id: 'guest',
         subscribed: false,
       });
+      navigate(returnTo, { replace: true });
     },
     onArrowPress: (direction: string) => {
       if (direction === 'up') {

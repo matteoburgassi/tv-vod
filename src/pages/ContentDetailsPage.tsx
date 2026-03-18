@@ -93,17 +93,17 @@ export default function ContentDetailsPage() {
   const handlePlay = useCallback(async () => {
     if (!content || !contentId) return;
 
+    if (!user) {
+      navigate('/login', { state: { returnTo: `/content/${contentId}` } });
+      return;
+    }
+
     if (!isDrm) {
       const mainUrl = getMainStreamUrl(content.deliveries);
       const trailerUrl = getStreamUrl(content.deliveries);
       setPlayerUrl(mainUrl || trailerUrl);
       setDrmConfig(undefined);
       setShowPlayer(true);
-      return;
-    }
-
-    if (!user) {
-      setDrmError('Login required for DRM content');
       return;
     }
 
@@ -140,7 +140,7 @@ export default function ContentDetailsPage() {
     } finally {
       setDrmLoading(false);
     }
-  }, [content, contentId, isDrm, user]);
+  }, [content, contentId, isDrm, user, navigate]);
 
   if (loading) return <LoadingSpinner />;
   if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
@@ -187,9 +187,6 @@ export default function ContentDetailsPage() {
                 <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
                   {content.content_type}
                 </span>
-              )}
-              {isDrm && !user && (
-                <p className="mb-2 text-sm text-yellow-400">Login required to play this content</p>
               )}
               {drmError && (
                 <p className="mb-2 text-sm text-red-400">{drmError}</p>

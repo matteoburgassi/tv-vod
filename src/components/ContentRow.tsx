@@ -38,77 +38,83 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
   const vertAnimKeyRef = useRef({});
   const focusedCardIndexRef = useRef(0);
 
+  const pendingFocusRef = useRef(0);
+
   const handleCardFocused = useCallback((el: HTMLDivElement, cardIndex: number) => {
     focusedCardIndexRef.current = cardIndex;
-    const container = containerRef.current;
-    const strip = stripRef.current;
-    if (!container || !strip) return;
+    cancelAnimationFrame(pendingFocusRef.current);
 
-    const viewportWidth = container.clientWidth;
-    const currentOffset = offsetRef.current;
+    pendingFocusRef.current = requestAnimationFrame(() => {
+      const container = containerRef.current;
+      const strip = stripRef.current;
+      if (!container || !strip) return;
 
-    const wrapper = el.parentElement as HTMLElement | null;
-    const cardLeft = wrapper ? wrapper.offsetLeft : el.offsetLeft;
-    const cardRight = cardLeft + (wrapper ? wrapper.offsetWidth : el.offsetWidth);
+      const viewportWidth = container.clientWidth;
+      const currentOffset = offsetRef.current;
 
-    const visibleLeft = -currentOffset + SCROLL_PADDING;
-    const visibleRight = -currentOffset + viewportWidth - SCROLL_PADDING;
+      const wrapper = el.parentElement as HTMLElement | null;
+      const cardLeft = wrapper ? wrapper.offsetLeft : el.offsetLeft;
+      const cardRight = cardLeft + (wrapper ? wrapper.offsetWidth : el.offsetWidth);
 
-    let newOffset = currentOffset;
+      const visibleLeft = -currentOffset + SCROLL_PADDING;
+      const visibleRight = -currentOffset + viewportWidth - SCROLL_PADDING;
 
-    if (cardLeft < visibleLeft) {
-      newOffset = -(cardLeft - SCROLL_PADDING);
-    } else if (cardRight > visibleRight) {
-      newOffset = -(cardRight - viewportWidth + SCROLL_PADDING);
-    }
+      let newOffset = currentOffset;
 
-    const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
-    const maxOffset = 0;
-    const scrollableWidth = totalWidth + SCROLL_PADDING * 2;
-    const minOffset = scrollableWidth > viewportWidth
-      ? -(scrollableWidth - viewportWidth)
-      : 0;
-    newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+      if (cardLeft < visibleLeft) {
+        newOffset = -(cardLeft - SCROLL_PADDING);
+      } else if (cardRight > visibleRight) {
+        newOffset = -(cardRight - viewportWidth + SCROLL_PADDING);
+      }
 
-    if (newOffset !== currentOffset) {
-      animateValue(
-        animKeyRef.current,
-        currentOffset,
-        newOffset,
-        ANIM_DURATION,
-        (v) => {
-          offsetRef.current = v;
-          if (strip) {
-            strip.style.transform = `translate3d(${v}px, 0, 0)`;
+      const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
+      const maxOffset = 0;
+      const scrollableWidth = totalWidth + SCROLL_PADDING * 2;
+      const minOffset = scrollableWidth > viewportWidth
+        ? -(scrollableWidth - viewportWidth)
+        : 0;
+      newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+
+      if (newOffset !== currentOffset) {
+        animateValue(
+          animKeyRef.current,
+          currentOffset,
+          newOffset,
+          ANIM_DURATION,
+          (v) => {
+            offsetRef.current = v;
+            if (strip) {
+              strip.style.transform = `translate3d(${v}px, 0, 0)`;
+            }
+          },
+        );
+      }
+
+      const rowEl = container.closest('[data-content-row]');
+      if (rowEl) {
+        const rect = rowEl.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        const scrollEl = document.getElementById('page-scroll-container');
+        if (scrollEl) {
+          let delta = 0;
+          if (rect.top < 80) {
+            delta = rect.top - 80;
+          } else if (rect.bottom > viewportH) {
+            delta = rect.bottom - viewportH + 20;
           }
-        },
-      );
-    }
-
-    const rowEl = container.closest('[data-content-row]');
-    if (rowEl) {
-      const rect = rowEl.getBoundingClientRect();
-      const viewportH = window.innerHeight;
-      const scrollEl = document.getElementById('page-scroll-container');
-      if (scrollEl) {
-        let delta = 0;
-        if (rect.top < 80) {
-          delta = rect.top - 80;
-        } else if (rect.bottom > viewportH) {
-          delta = rect.bottom - viewportH + 20;
-        }
-        if (delta !== 0) {
-          const targetTop = scrollEl.scrollTop + delta;
-          animateValue(
-            vertAnimKeyRef.current,
-            scrollEl.scrollTop,
-            targetTop,
-            ANIM_DURATION,
-            (v) => { scrollEl.scrollTop = v; },
-          );
+          if (delta !== 0) {
+            const targetTop = scrollEl.scrollTop + delta;
+            animateValue(
+              vertAnimKeyRef.current,
+              scrollEl.scrollTop,
+              targetTop,
+              ANIM_DURATION,
+              (v) => { scrollEl.scrollTop = v; },
+            );
+          }
         }
       }
-    }
+    });
   }, [items.length]);
 
   const makeCardArrowPress = useCallback(

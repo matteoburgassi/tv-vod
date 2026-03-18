@@ -50,9 +50,8 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
       className="group shrink-0 cursor-pointer"
       style={{
         width: 180,
-        contain: 'layout style',
-        transform: focused ? 'scale(1.1)' : 'scale(1)',
-        transition: 'transform 200ms ease-out',
+        contain: 'strict',
+        height: 280,
       }}
       onClick={onPress}
     >
@@ -62,7 +61,10 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
           width: 180,
           height: 240,
           border: focused ? '3px solid white' : '3px solid transparent',
-          transition: 'border-color 200ms ease-out',
+          transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+          transformOrigin: 'center center',
+          transition: 'transform 200ms ease-out, border-color 200ms ease-out',
+          willChange: 'transform',
         }}
       >
         {cover ? (

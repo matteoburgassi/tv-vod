@@ -24,12 +24,14 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
 
   useEffect(() => {
     if (hasFocusedChild) {
-      const scrollEl = document.getElementById('page-scroll-container');
-      if (scrollEl) {
-        animateValue(heroAnimKey.current, scrollEl.scrollTop, 0, 120, (v) => {
-          scrollEl.scrollTop = v;
-        });
-      }
+      requestAnimationFrame(() => {
+        const scrollEl = document.getElementById('page-scroll-container');
+        if (scrollEl) {
+          animateValue(heroAnimKey.current, scrollEl.scrollTop, 0, 120, (v) => {
+            scrollEl.scrollTop = v;
+          });
+        }
+      });
     }
   }, [hasFocusedChild]);
 

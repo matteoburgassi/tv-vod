@@ -11,9 +11,10 @@ interface ContentCardProps {
   focusKeyOverride?: string;
   onArrowPress?: (direction: string) => boolean;
   onFocused?: (el: HTMLDivElement) => void;
+  virtualized?: boolean;
 }
 
-export default memo(function ContentCard({ item, showBadge = false, focusKeyOverride, onArrowPress, onFocused }: ContentCardProps) {
+export default memo(function ContentCard({ item, showBadge = false, focusKeyOverride, onArrowPress, onFocused, virtualized = false }: ContentCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -36,10 +37,24 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
   const cover = getCoverImage(item.assets);
   const [loaded, setLoaded] = useState(() => (cover ? isImageCached(cover) : false));
 
+  const shouldVirtualize = virtualized && !focused;
+
   useEffect(() => {
-    if (!cover || loaded) return;
+    if (shouldVirtualize || !cover || loaded) return;
     preloadImage(cover).then(() => setLoaded(true)).catch(() => {});
-  }, [cover, loaded]);
+  }, [cover, loaded, shouldVirtualize]);
+
+  if (shouldVirtualize) {
+    return (
+      <div
+        ref={(node) => {
+          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        }}
+        style={{ width: 180, height: 280 }}
+      />
+    );
+  }
 
   return (
     <div

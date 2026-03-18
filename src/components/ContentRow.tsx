@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import {
   useFocusable,
   FocusContext,
@@ -20,6 +20,7 @@ const CARD_WIDTH = 180;
 const CARD_GAP = 16;
 const SCROLL_PADDING = 48;
 const ANIM_DURATION = 120;
+const VIRTUALIZE_BUFFER = 4;
 
 export function getCardFocusKey(rowIndex: number, cardIndex: number) {
   return `row-${rowIndex}-card-${cardIndex}`;
@@ -37,6 +38,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
   const animKeyRef = useRef({});
   const vertAnimKeyRef = useRef({});
   const focusedCardIndexRef = useRef(0);
+  const [visibleRange, setVisibleRange] = useState<[number, number]>([0, 14]);
 
   const pendingFocusRef = useRef(0);
 
@@ -74,6 +76,14 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
         ? -(scrollableWidth - viewportWidth)
         : 0;
       newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+
+      const cardStep = CARD_WIDTH + CARD_GAP;
+      const viewStart = Math.floor(Math.max(0, -newOffset) / cardStep);
+      const viewEnd = Math.ceil((-newOffset + viewportWidth) / cardStep);
+      setVisibleRange([
+        Math.max(0, viewStart - VIRTUALIZE_BUFFER),
+        Math.min(items.length - 1, viewEnd + VIRTUALIZE_BUFFER),
+      ]);
 
       if (newOffset !== currentOffset) {
         animateValue(
@@ -186,6 +196,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
                   focusKeyOverride={getCardFocusKey(rowIndex, i)}
                   onArrowPress={makeCardArrowPress(i)}
                   onFocused={makeCardFocused(i)}
+                  virtualized={i < visibleRange[0] || i > visibleRange[1]}
                 />
               </div>
             ))}

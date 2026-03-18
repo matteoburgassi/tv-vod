@@ -53,8 +53,8 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
         className="relative overflow-hidden rounded-lg"
         style={{
           aspectRatio: '3/4',
-          boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
-          transition: 'box-shadow 200ms ease-out',
+          border: focused ? '3px solid white' : '3px solid transparent',
+          transition: 'border-color 200ms ease-out',
         }}
       >
         {cover ? (

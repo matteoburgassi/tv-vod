@@ -61,7 +61,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const rawBg = getArtBackground(item.assets) || getHighlight(item.assets);
   const bg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.7)) : null;
   const rawTitleImg = getHighlightTitle(item.assets);
-  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(window.innerWidth * 0.4)) : null;
+  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(window.innerWidth * 0.4), Math.round(window.innerWidth * 0.15)) : null;
 
   return (
     <FocusContext.Provider value={focusKey}>

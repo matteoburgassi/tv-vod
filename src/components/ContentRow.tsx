@@ -5,6 +5,7 @@ import {
 } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import ContentCard from './ContentCard';
+import { smoothScrollTo } from '../utils/smoothScroll';
 
 interface ContentRowProps {
   title: string;
@@ -74,9 +75,9 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
     const viewRight = container.scrollLeft + container.clientWidth;
 
     if (cardLeft < viewLeft) {
-      container.scrollLeft = cardLeft;
+      smoothScrollTo(container, cardLeft, 'x', 150);
     } else if (cardRight > viewRight) {
-      container.scrollLeft = cardRight - container.clientWidth;
+      smoothScrollTo(container, cardRight - container.clientWidth, 'x', 150);
     }
 
     const rowEl = container.parentElement;
@@ -84,9 +85,9 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       const rect = rowEl.getBoundingClientRect();
       const viewportH = window.innerHeight;
       if (rect.top < 80) {
-        window.scrollBy({ top: rect.top - 80, behavior: 'instant' as ScrollBehavior });
+        smoothScrollTo(window, window.scrollY + rect.top - 80, 'y', 150);
       } else if (rect.bottom > viewportH - 40) {
-        window.scrollBy({ top: rect.bottom - viewportH + 40, behavior: 'instant' as ScrollBehavior });
+        smoothScrollTo(window, window.scrollY + rect.bottom - viewportH + 40, 'y', 150);
       }
     }
   }, []);

@@ -145,18 +145,49 @@ function SearchInput({
 }
 
 function UserButton({ onArrowPress }: { onArrowPress: (direction: string) => boolean }) {
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handlePress = useCallback(() => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      navigate('/login');
+    }
+  }, [isAuthenticated, logout, navigate]);
+
   const { ref, focused } = useFocusable({
-    onEnterPress: logout,
+    onEnterPress: handlePress,
     onArrowPress,
   });
+
+  if (!isAuthenticated) {
+    return (
+      <button
+        ref={ref}
+        onClick={handlePress}
+        className="flex items-center gap-2 rounded-lg border px-3 py-2"
+        style={{
+          borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
+          backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+          boxShadow: focused ? '0 0 0 2px rgba(233,30,140,0.5)' : 'none',
+          transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out',
+        }}
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white/70">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+        <span className="text-sm text-white/80">Sign In</span>
+      </button>
+    );
+  }
 
   const displayName = user?.firstname || user?.email?.split('@')[0] || 'Guest';
 
   return (
     <button
       ref={ref}
-      onClick={logout}
+      onClick={handlePress}
       className="flex items-center gap-2 rounded-lg border px-3 py-2"
       style={{
         borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',

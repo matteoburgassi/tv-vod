@@ -1,6 +1,8 @@
 package com.digitalvirgo.galaxytv
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.KeyEvent
@@ -81,6 +83,12 @@ class MainActivity : ComponentActivity() {
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {
                     request?.grant(request.resources)
+                }
+
+                override fun getDefaultVideoPoster(): Bitmap {
+                    return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888).apply {
+                        eraseColor(Color.BLACK)
+                    }
                 }
             }
         }

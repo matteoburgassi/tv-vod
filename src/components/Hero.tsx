@@ -76,7 +76,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
             src={bg}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ transition: 'opacity 700ms ease-out', willChange: 'opacity' }}
+            style={{ transition: 'opacity 700ms ease-out' }}
             key={item.content_id}
             decoding="async"
           />
@@ -168,7 +168,6 @@ function HeroButton({
       style={{
         transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
         transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
-        willChange: 'transform',
         boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
       }}
     >

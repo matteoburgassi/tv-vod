@@ -234,7 +234,6 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
         transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
         boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
         transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
-        willChange: 'transform',
       }}
     >
       {loading ? (
@@ -264,7 +263,6 @@ function BackButton({ onPress }: { onPress: () => void }) {
         transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
         boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
         transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
-        willChange: 'transform',
       }}
     >
       Back
@@ -329,7 +327,6 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         style={{
           opacity: loaded ? 1 : 0,
           transition: 'opacity 1000ms ease-out',
-          willChange: 'opacity',
         }}
       />
     </>

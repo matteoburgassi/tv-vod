@@ -155,7 +155,6 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
             opacity: showControls ? 1 : 0,
             pointerEvents: showControls ? 'auto' : 'none',
             transition: 'opacity 300ms ease-out',
-            willChange: 'opacity',
           }}
         >
           <PlayerBackButton onClose={onClose} seek={seekDelta} />
@@ -205,7 +204,6 @@ function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta
           backgroundColor: focused ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
           transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
           transition: 'transform 150ms ease-out, background-color 150ms ease-out',
-          willChange: 'transform',
         }}
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current">
@@ -312,7 +310,6 @@ function PlayPauseButton({
         backgroundColor: focused ? 'rgba(255,255,255,0.3)' : 'transparent',
         transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
         transition: 'transform 150ms ease-out, background-color 150ms ease-out',
-        willChange: 'transform',
       }}
     >
       {playing ? (

@@ -47,63 +47,69 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
         (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="group shrink-0 cursor-pointer"
+      className="shrink-0"
       style={{
         width: 180,
-        contain: 'strict',
         height: 280,
+        contain: 'layout style',
       }}
-      onClick={onPress}
     >
       <div
-        className="relative overflow-hidden rounded-lg bg-white/5"
+        className="cursor-pointer"
         style={{
-          width: 180,
-          height: 240,
-          border: focused ? '3px solid white' : '3px solid transparent',
-          transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+          transform: focused ? 'scale(1.1)' : 'scale(1)',
           transformOrigin: 'center center',
-          transition: 'transform 200ms ease-out, border-color 200ms ease-out',
-          willChange: 'transform',
+          transition: 'transform 200ms ease-out',
         }}
+        onClick={onPress}
       >
-        {cover ? (
-          <>
-            {!loaded && <div className="shimmer absolute inset-0" />}
-            <img
-              src={cover}
-              alt={item.title}
-              width={180}
-              height={240}
-              className="h-full w-full object-cover"
-              loading="eager"
-              decoding="async"
-              style={{
-                opacity: loaded ? 1 : 0,
-                transition: 'opacity 150ms ease-out',
-              }}
-            />
-          </>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-white/10">
-            <span className="text-sm text-white/50">{item.title}</span>
-          </div>
-        )}
-        {showBadge && item.content_type && (
-          <span className="absolute top-2 left-2 rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-            {item.content_type}
-          </span>
-        )}
+        <div
+          className="relative overflow-hidden rounded-lg bg-white/5"
+          style={{
+            width: 180,
+            height: 240,
+            border: focused ? '3px solid white' : '3px solid transparent',
+            transition: 'border-color 200ms ease-out',
+          }}
+        >
+          {cover ? (
+            <>
+              {!loaded && <div className="shimmer absolute inset-0" />}
+              <img
+                src={cover}
+                alt={item.title}
+                width={180}
+                height={240}
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                style={{
+                  opacity: loaded ? 1 : 0,
+                  transition: 'opacity 150ms ease-out',
+                }}
+              />
+            </>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-white/10">
+              <span className="text-sm text-white/50">{item.title}</span>
+            </div>
+          )}
+          {showBadge && item.content_type && (
+            <span className="absolute top-2 left-2 rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+              {item.content_type}
+            </span>
+          )}
+        </div>
+        <p
+          className="mt-2 truncate text-sm"
+          style={{
+            color: focused ? 'white' : 'rgba(255,255,255,0.7)',
+            transition: 'color 200ms ease-out',
+          }}
+        >
+          {item.title}
+        </p>
       </div>
-      <p
-        className="mt-2 truncate text-sm"
-        style={{
-          color: focused ? 'white' : 'rgba(255,255,255,0.7)',
-          transition: 'color 200ms ease-out',
-        }}
-      >
-        {item.title}
-      </p>
     </div>
   );
 });

@@ -73,7 +73,6 @@ function DialogButton({
         transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
         boxShadow: focused ? '0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
         transition: 'transform 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out',
-        willChange: 'transform',
       }}
     >
       {label}

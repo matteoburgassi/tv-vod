@@ -68,7 +68,6 @@ export default function Header() {
           WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
           transition: 'background-color 300ms ease-out, backdrop-filter 300ms ease-out',
           transform: 'translate3d(0,0,0)',
-          willChange: 'background-color',
         }}
       >
         <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />
@@ -91,7 +90,6 @@ function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
       style={{
         transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
         transition: 'transform 200ms ease-out, filter 200ms ease-out',
-        willChange: 'transform',
         filter: focused ? 'drop-shadow(0 0 8px rgba(233,30,140,0.5))' : 'none',
       }}
     >

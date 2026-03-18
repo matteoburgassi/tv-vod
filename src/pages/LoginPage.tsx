@@ -163,6 +163,7 @@ function FocusableInput({
     focusKey,
     onEnterPress: () => onRequestKeyboard?.(),
     onArrowPress: (direction: string) => {
+      console.log("onArrowPress")
       if (direction === 'down' && nextFocus) {
         setFocus(nextFocus);
         return false;

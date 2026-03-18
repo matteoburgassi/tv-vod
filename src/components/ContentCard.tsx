@@ -64,19 +64,22 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
         }}
       >
         {cover ? (
-          <img
-            src={cover}
-            alt={item.title}
-            width={180}
-            height={240}
-            className="h-full w-full object-cover"
-            loading="eager"
-            decoding="async"
-            style={{
-              opacity: loaded ? 1 : 0,
-              transition: 'opacity 150ms ease-out',
-            }}
-          />
+          <>
+            {!loaded && <div className="shimmer absolute inset-0" />}
+            <img
+              src={cover}
+              alt={item.title}
+              width={180}
+              height={240}
+              className="h-full w-full object-cover"
+              loading="eager"
+              decoding="async"
+              style={{
+                opacity: loaded ? 1 : 0,
+                transition: 'opacity 150ms ease-out',
+              }}
+            />
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-white/10">
             <span className="text-sm text-white/50">{item.title}</span>

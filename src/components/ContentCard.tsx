@@ -48,7 +48,7 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
       className="group shrink-0 cursor-pointer"
       style={{
         width: 180,
-        contain: 'layout style paint',
+        contain: 'layout style',
         transform: focused ? 'scale(1.1)' : 'scale(1)',
         transition: 'transform 200ms ease-out',
       }}
@@ -70,7 +70,7 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
             width={180}
             height={240}
             className="h-full w-full object-cover"
-            loading="lazy"
+            loading="eager"
             decoding="async"
             style={{
               opacity: loaded ? 1 : 0,

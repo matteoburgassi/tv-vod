@@ -1,8 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { loginWithEmail } from '@digitalvirgo/drm-player';
+import TVKeyboard from '../components/TVKeyboard';
+
+type ActiveField = 'email' | 'password' | null;
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -13,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeField, setActiveField] = useState<ActiveField>(null);
 
   const { ref, focusKey } = useFocusable({
     focusKey: 'login-page',
@@ -44,135 +48,122 @@ export default function LoginPage() {
     }
   }, [email, password, login]);
 
+  const openKeyboard = useCallback((field: ActiveField) => {
+    setActiveField(field);
+  }, []);
+
+  const closeKeyboard = useCallback(() => {
+    const field = activeField;
+    setActiveField(null);
+    setTimeout(() => {
+      if (field === 'email') setFocus('login-email');
+      else if (field === 'password') setFocus('login-password');
+    }, 100);
+  }, [activeField]);
+
+  const handleKeyboardSubmit = useCallback(
+    (value: string) => {
+      if (activeField === 'email') {
+        setEmail(value);
+        setActiveField(null);
+        setTimeout(() => setActiveField('password'), 150);
+      } else if (activeField === 'password') {
+        setPassword(value);
+        setActiveField(null);
+        setTimeout(() => setFocus('login-submit'), 100);
+      }
+    },
+    [activeField],
+  );
+
   return (
-    <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
-        <div className="w-full max-w-lg px-8">
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
-            <p className="mt-3 text-lg text-white/50">Sign in to your account</p>
-          </div>
+    <>
+      <FocusContext.Provider value={focusKey}>
+        <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
+          <div className="w-full max-w-lg px-8">
+            <div className="mb-12 text-center">
+              <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
+              <p className="mt-3 text-lg text-white/50">Sign in to your account</p>
+            </div>
 
-          <div className="space-y-6">
-            <FocusableInput
-              focusKey="login-email"
-              label="Email"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="your@email.com"
-              nextFocus="login-password"
-            />
+            <div className="space-y-6">
+              <FocusableInput
+                focusKey="login-email"
+                label="Email"
+                type="email"
+                value={email}
+                placeholder="your@email.com"
+                prevFocus={undefined}
+                nextFocus="login-password"
+                onRequestKeyboard={() => openKeyboard('email')}
+              />
 
-            <FocusableInput
-              focusKey="login-password"
-              label="Password"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              prevFocus="login-email"
-              nextFocus="login-submit"
-              onSubmit={handleLogin}
-            />
+              <FocusableInput
+                focusKey="login-password"
+                label="Password"
+                type="password"
+                value={password}
+                placeholder="••••••••"
+                prevFocus="login-email"
+                nextFocus="login-submit"
+                onRequestKeyboard={() => openKeyboard('password')}
+              />
 
-            {error && (
-              <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
-                {error}
-              </div>
-            )}
+              {error && (
+                <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
+                  {error}
+                </div>
+              )}
 
-            <LoginButton
-              loading={loading}
-              onPress={handleLogin}
-            />
+              <LoginButton
+                loading={loading}
+                onPress={handleLogin}
+              />
 
-            <SkipButton returnTo={returnTo} />
+              <SkipButton returnTo={returnTo} />
+            </div>
           </div>
         </div>
-      </div>
-    </FocusContext.Provider>
+      </FocusContext.Provider>
+
+      {activeField && (
+        <TVKeyboard
+          value={activeField === 'email' ? email : password}
+          label={activeField === 'email' ? 'Email' : 'Password'}
+          masked={activeField === 'password'}
+          onChanged={activeField === 'email' ? setEmail : setPassword}
+          onSubmit={handleKeyboardSubmit}
+          onCancel={closeKeyboard}
+        />
+      )}
+    </>
   );
 }
-
-const hasNativeBridge = typeof (window as any).AndroidBridge?.showInputDialog === 'function';
 
 function FocusableInput({
   focusKey,
   label,
   type,
   value,
-  onChange,
   placeholder,
   prevFocus,
   nextFocus,
-  onSubmit,
+  onRequestKeyboard,
 }: {
   focusKey: string;
   label: string;
   type: string;
   value: string;
-  onChange: (v: string) => void;
   placeholder: string;
   prevFocus?: string;
   nextFocus?: string;
-  onSubmit?: () => void;
+  onRequestKeyboard?: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.id === focusKey) {
-        onChange(detail.value);
-        if (detail.next && hasNativeBridge) {
-          setTimeout(() => setFocus(detail.next), 100);
-          setTimeout(() => {
-            document.dispatchEvent(new CustomEvent('native-open-field', { detail: { id: detail.next } }));
-          }, 200);
-        }
-      }
-    };
-    document.addEventListener('native-input', handler);
-    return () => document.removeEventListener('native-input', handler);
-  }, [focusKey, onChange]);
-
-  useEffect(() => {
-    if (!hasNativeBridge) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.id === focusKey) {
-        (window as any).AndroidBridge.showInputDialog(
-          focusKey,
-          label,
-          value,
-          type === 'password',
-          nextFocus ?? '',
-        );
-      }
-    };
-    document.addEventListener('native-open-field', handler);
-    return () => document.removeEventListener('native-open-field', handler);
-  }, [focusKey, label, value, type, nextFocus]);
-
-  const handleEnter = useCallback(() => {
-    if (hasNativeBridge) {
-      (window as any).AndroidBridge.showInputDialog(
-        focusKey,
-        label,
-        value,
-        type === 'password',
-        nextFocus ?? '',
-      );
-    } else {
-      inputRef.current?.focus();
-    }
-  }, [focusKey, label, value, type, nextFocus]);
-
   const { ref, focused } = useFocusable({
     focusKey,
-    onEnterPress: handleEnter,
+    onEnterPress: () => onRequestKeyboard?.(),
     onArrowPress: (direction: string) => {
+      console.log("onArrowPress")
       if (direction === 'down' && nextFocus) {
         setFocus(nextFocus);
         return false;
@@ -196,21 +187,14 @@ function FocusableInput({
             : 'border-white/10 bg-white/5'
         }`}
       >
-        <input
-          ref={inputRef}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && onSubmit) {
-              e.preventDefault();
-              onSubmit();
-            }
-          }}
-          placeholder={placeholder}
-          className="w-full bg-transparent px-5 py-4 text-lg text-white placeholder-white/30 outline-none"
-          readOnly={hasNativeBridge}
-        />
+        <div className="flex items-center px-5 py-4">
+          <span className={`text-lg ${value ? 'text-white' : 'text-white/30'}`}>
+            {value ? (type === 'password' ? '•'.repeat(value.length) : value) : placeholder}
+          </span>
+          {focused && (
+            <span className="ml-0.5 inline-block h-6 w-0.5 animate-pulse bg-white" />
+          )}
+        </div>
       </div>
     </div>
   );

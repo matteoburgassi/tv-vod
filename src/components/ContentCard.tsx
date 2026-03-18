@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { memo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
@@ -10,7 +10,7 @@ interface ContentCardProps {
   onArrowPress?: (direction: string) => boolean;
 }
 
-export default function ContentCard({ item, showBadge = false, onArrowPress }: ContentCardProps) {
+export default memo(function ContentCard({ item, showBadge = false, onArrowPress }: ContentCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +25,9 @@ export default function ContentCard({ item, showBadge = false, onArrowPress }: C
 
   useEffect(() => {
     if (focused && cardRef.current) {
-      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      requestAnimationFrame(() => {
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
     }
   }, [focused]);
 
@@ -38,15 +40,18 @@ export default function ContentCard({ item, showBadge = false, onArrowPress }: C
         (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
       className="group shrink-0 cursor-pointer"
-      style={{ width: 180 }}
+      style={{ width: 180, contain: 'layout style paint' }}
       onClick={onPress}
     >
       <div
-        className={`
-          relative overflow-hidden rounded-lg transition-all duration-200
-          ${focused ? 'scale-110 ring-3 ring-white shadow-lg shadow-white/20' : 'scale-100 ring-0'}
-        `}
-        style={{ aspectRatio: '3/4' }}
+        className="relative overflow-hidden rounded-lg"
+        style={{
+          aspectRatio: '3/4',
+          transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+          transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+          willChange: 'transform',
+          boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        }}
       >
         {cover ? (
           <img
@@ -54,6 +59,7 @@ export default function ContentCard({ item, showBadge = false, onArrowPress }: C
             alt={item.title}
             className="h-full w-full object-cover"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-white/10">
@@ -67,13 +73,14 @@ export default function ContentCard({ item, showBadge = false, onArrowPress }: C
         )}
       </div>
       <p
-        className={`
-          mt-2 truncate text-sm transition-colors duration-200
-          ${focused ? 'text-white' : 'text-white/70'}
-        `}
+        className="mt-2 truncate text-sm"
+        style={{
+          color: focused ? 'white' : 'rgba(255,255,255,0.7)',
+          transition: 'color 200ms ease-out',
+        }}
       >
         {item.title}
       </p>
     </div>
   );
-}
+});

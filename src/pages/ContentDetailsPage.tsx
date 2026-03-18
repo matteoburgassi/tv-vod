@@ -169,6 +169,7 @@ export default function ContentDetailsPage() {
               src={bg}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
+              decoding="async"
             />
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/50 to-[#120818]/30" />
@@ -226,7 +227,9 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
 
   useEffect(() => {
     if (focused && btnRef.current) {
-      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      requestAnimationFrame(() => {
+        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
     }
   }, [focused]);
 
@@ -238,9 +241,13 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
       }}
       onClick={loading ? undefined : onPress}
       disabled={loading}
-      className={`flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black transition-all duration-200 hover:bg-white/90 disabled:opacity-60 ${
-        focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
-      }`}
+      className="flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black disabled:opacity-60"
+      style={{
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+        willChange: 'transform',
+      }}
     >
       {loading ? (
         <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24">
@@ -252,7 +259,7 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
           <path d="M8 5v14l11-7z" />
         </svg>
       )}
-      {loading ? 'Loading…' : 'Play'}
+      {loading ? 'Loading...' : 'Play'}
     </button>
   );
 }
@@ -263,7 +270,9 @@ function BackButton({ onPress }: { onPress: () => void }) {
 
   useEffect(() => {
     if (focused && btnRef.current) {
-      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      requestAnimationFrame(() => {
+        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
     }
   }, [focused]);
 
@@ -274,9 +283,13 @@ function BackButton({ onPress }: { onPress: () => void }) {
         (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
       }}
       onClick={onPress}
-      className={`rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/25 ${
-        focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
-      }`}
+      className="rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm"
+      style={{
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+        willChange: 'transform',
+      }}
     >
       Back
     </button>
@@ -326,6 +339,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
           src={poster}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
         />
       )}
       <video
@@ -335,9 +349,12 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         loop
         playsInline
         onCanPlay={handleCanPlay}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-          loaded ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 1000ms ease-out',
+          willChange: 'opacity',
+        }}
       />
     </>
   );

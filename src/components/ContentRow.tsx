@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   useFocusable,
   FocusContext,
@@ -13,7 +14,7 @@ interface ContentRowProps {
   onArrowPress?: (direction: string) => boolean;
 }
 
-export default function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
+export default memo(function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
     focusKey: focusKeyOverride,
     trackChildren: true,
@@ -23,12 +24,18 @@ export default function ContentRow({ title, items, showBadge = false, focusKeyOv
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="mb-4" onClick={() => focusSelf()}>
+      <div
+        ref={ref}
+        className="mb-4"
+        style={{ contain: 'layout style', contentVisibility: 'auto', containIntrinsicSize: '0 320px' }}
+        onClick={() => focusSelf()}
+      >
         <h2
-          className={`
-            mb-3 px-12 text-xl font-semibold transition-colors duration-200
-            ${hasFocusedChild ? 'text-white' : 'text-white/60'}
-          `}
+          className="mb-3 px-12 text-xl font-semibold"
+          style={{
+            color: hasFocusedChild ? 'white' : 'rgba(255,255,255,0.6)',
+            transition: 'color 200ms ease-out',
+          }}
         >
           {title}
         </h2>
@@ -43,4 +50,4 @@ export default function ContentRow({ title, items, showBadge = false, focusKeyOv
       </div>
     </FocusContext.Provider>
   );
-}
+});

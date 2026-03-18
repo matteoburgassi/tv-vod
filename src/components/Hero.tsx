@@ -21,7 +21,9 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
 
   useEffect(() => {
     if (hasFocusedChild && heroRef.current) {
-      heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      requestAnimationFrame(() => {
+        heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
   }, [hasFocusedChild]);
 
@@ -59,13 +61,16 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
           (heroRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         }}
         className="relative h-[70vh] min-h-[400px] w-full overflow-hidden"
+        style={{ contain: 'layout style' }}
       >
         {bg && (
           <img
             src={bg}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ transition: 'opacity 700ms ease-out', willChange: 'opacity' }}
             key={item.content_id}
+            decoding="async"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/40 to-transparent" />
@@ -77,6 +82,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
               src={titleImg}
               alt={item.title}
               className="mb-4 h-auto max-h-24 w-auto max-w-md object-contain"
+              decoding="async"
             />
           ) : (
             <h1 className="mb-4 text-5xl leading-tight font-semibold text-white drop-shadow-lg">
@@ -104,13 +110,16 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
         </div>
 
         {items.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+          <div className="absolute bottom-6 left-1/2 z-10 flex gap-2" style={{ transform: 'translate3d(-50%,0,0)' }}>
             {items.map((_, i) => (
               <button
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === activeIndex ? 'w-8 bg-white' : 'w-3 bg-white/30'
-                }`}
+                className="h-1.5 rounded-full"
+                style={{
+                  width: i === activeIndex ? 32 : 12,
+                  backgroundColor: i === activeIndex ? 'white' : 'rgba(255,255,255,0.3)',
+                  transition: 'width 300ms ease-out, background-color 300ms ease-out',
+                }}
                 onClick={() => setActiveIndex(i)}
                 tabIndex={-1}
               />
@@ -138,7 +147,9 @@ function HeroButton({
 
   useEffect(() => {
     if (focused && btnRef.current) {
-      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      requestAnimationFrame(() => {
+        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
     }
   }, [focused]);
 
@@ -149,14 +160,17 @@ function HeroButton({
         (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
       }}
       onClick={onPress}
-      className={`
-        rounded-lg px-8 py-3 text-lg font-medium transition-all duration-200
-        ${primary
-          ? 'bg-white text-black hover:bg-white/90'
-          : 'bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm'
-        }
-        ${focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''}
-      `}
+      className={`rounded-lg px-8 py-3 text-lg font-medium ${
+        primary
+          ? 'bg-white text-black'
+          : 'bg-white/15 text-white backdrop-blur-sm'
+      }`}
+      style={{
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+        willChange: 'transform',
+        boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+      }}
     >
       {label}
     </button>

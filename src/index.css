@@ -21,6 +21,7 @@ html {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
 }
 
 body {
@@ -33,6 +34,10 @@ body {
   overscroll-behavior: none;
   overflow: hidden;
   cursor: none;
+}
+
+img {
+  content-visibility: auto;
 }
 
 video {

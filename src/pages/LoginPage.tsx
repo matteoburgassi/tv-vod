@@ -95,6 +95,8 @@ export default function LoginPage() {
   );
 }
 
+const hasNativeBridge = typeof (window as any).AndroidBridge?.showInputDialog === 'function';
+
 function FocusableInput({
   focusKey,
   label,
@@ -118,9 +120,33 @@ function FocusableInput({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.id === focusKey) {
+        onChange(detail.value);
+      }
+    };
+    document.addEventListener('native-input', handler);
+    return () => document.removeEventListener('native-input', handler);
+  }, [focusKey, onChange]);
+
+  const handleEnter = useCallback(() => {
+    if (hasNativeBridge) {
+      (window as any).AndroidBridge.showInputDialog(
+        focusKey,
+        label,
+        value,
+        type === 'password',
+      );
+    } else {
+      inputRef.current?.focus();
+    }
+  }, [focusKey, label, value, type]);
+
   const { ref, focused } = useFocusable({
     focusKey,
-    onEnterPress: () => inputRef.current?.focus(),
+    onEnterPress: handleEnter,
     onArrowPress: (direction: string) => {
       if (direction === 'down' && nextFocus) {
         setFocus(nextFocus);
@@ -158,6 +184,7 @@ function FocusableInput({
           }}
           placeholder={placeholder}
           className="w-full bg-transparent px-5 py-4 text-lg text-white placeholder-white/30 outline-none"
+          readOnly={hasNativeBridge}
         />
       </div>
     </div>

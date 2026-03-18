@@ -1,20 +1,24 @@
 package com.digitalvirgo.galaxytv
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
 import androidx.activity.ComponentActivity
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +58,40 @@ class MainActivity : ComponentActivity() {
             settings.allowContentAccess = true
             settings.useWideViewPort = true
             settings.loadWithOverviewMode = true
+
+            addJavascriptInterface(object {
+                @JavascriptInterface
+                fun showInputDialog(fieldId: String, label: String, currentValue: String, isPassword: Boolean) {
+                    runOnUiThread {
+                        val input = EditText(this@MainActivity).apply {
+                            setText(currentValue)
+                            inputType = if (isPassword)
+                                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                            else
+                                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                            setSelectAllOnFocus(true)
+                        }
+
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle(label)
+                            .setView(input)
+                            .setPositiveButton("OK") { _, _ ->
+                                val value = input.text.toString()
+                                val escaped = value.replace("\\", "\\\\").replace("'", "\\'")
+                                webView.evaluateJavascript(
+                                    "document.dispatchEvent(new CustomEvent('native-input',{detail:{id:'$fieldId',value:'$escaped'}}))",
+                                    null
+                                )
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                            .also { dialog ->
+                                input.requestFocus()
+                                dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+                            }
+                    }
+                }
+            }, "AndroidBridge")
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(

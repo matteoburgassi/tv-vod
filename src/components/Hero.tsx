@@ -62,7 +62,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const bg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.7)) : null;
   const rawTitleImg = getHighlightTitle(item.assets);
   const vw = window.innerWidth;
-  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(vw * 0.35), Math.round(vw * 0.1)) : null;
+  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(vw * 0.35), Math.round(vw * 0.12)) : null;
 
   return (
     <FocusContext.Provider value={focusKey}>
@@ -87,12 +87,13 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
 
-        <div className="absolute bottom-16 left-12 z-10 max-w-2xl">
+        <div className="absolute bottom-16 left-12 z-10" style={{ maxWidth: '40vw' }}>
           {titleImg ? (
             <img
               src={titleImg}
               alt={item.title}
-              className="mb-4 h-auto max-h-[10vw] w-auto max-w-[35vw] object-contain object-left-bottom"
+              className="mb-4 block"
+              style={{ maxWidth: '35vw', maxHeight: '12vw', width: 'auto', height: 'auto', objectFit: 'contain' }}
               decoding="async"
             />
           ) : (

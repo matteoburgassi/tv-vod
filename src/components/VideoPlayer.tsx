@@ -127,11 +127,11 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const progress = playerState.duration ? (playerState.currentTime / playerState.duration) * 100 : 0;
+  const progress = playerState.duration ? playerState.currentTime / playerState.duration : 0;
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="fixed inset-0 z-50 bg-black" onMouseMove={resetHideTimer}>
+      <div ref={ref} className="fixed inset-0 z-50 bg-black" style={{ transform: 'translate3d(0,0,0)' }} onMouseMove={resetHideTimer}>
         <div ref={containerRef} className={`${PLAYER_CONTAINER_CLASS} h-full w-full`} />
 
         {playerState.loading && (
@@ -149,9 +149,13 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
         )}
 
         <div
-          className={`absolute inset-0 transition-opacity duration-300 ${
-            showControls ? 'opacity-100' : 'pointer-events-none opacity-0'
-          }`}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: showControls ? 1 : 0,
+            pointerEvents: showControls ? 'auto' : 'none',
+            transition: 'opacity 300ms ease-out',
+          }}
         >
           <PlayerBackButton onClose={onClose} seek={seekDelta} />
 
@@ -195,9 +199,12 @@ function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta
     <div className="absolute top-6 left-8 z-10">
       <button
         ref={ref}
-        className={`rounded-full p-3 text-white transition-all ${
-          focused ? 'scale-110 bg-white/30' : 'bg-white/10 hover:bg-white/20'
-        }`}
+        className="rounded-full p-3 text-white"
+        style={{
+          backgroundColor: focused ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
+          transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+          transition: 'transform 150ms ease-out, background-color 150ms ease-out',
+        }}
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current">
           <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
@@ -246,14 +253,21 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
         (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (barRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className={`h-2 cursor-pointer rounded-full transition-all ${
-        focused ? 'bg-white/40 ring-2 ring-white/60' : 'bg-white/20'
-      }`}
+      className="h-2 cursor-pointer overflow-hidden rounded-full"
+      style={{
+        backgroundColor: focused ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
+        boxShadow: focused ? '0 0 0 2px rgba(255,255,255,0.6)' : 'none',
+        transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out',
+      }}
       onClick={handleClick}
     >
       <div
-        className="h-full rounded-full bg-white transition-all"
-        style={{ width: `${progress}%` }}
+        className="h-full rounded-full bg-white"
+        style={{
+          transform: `translate3d(0,0,0) scaleX(${progress})`,
+          transformOrigin: 'left',
+          willChange: 'transform',
+        }}
       />
     </div>
   );
@@ -291,9 +305,12 @@ function PlayPauseButton({
   return (
     <button
       ref={ref}
-      className={`rounded-full p-2 text-white transition-all ${
-        focused ? 'scale-110 bg-white/30' : 'hover:bg-white/20'
-      }`}
+      className="rounded-full p-2 text-white"
+      style={{
+        backgroundColor: focused ? 'rgba(255,255,255,0.3)' : 'transparent',
+        transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+        transition: 'transform 150ms ease-out, background-color 150ms ease-out',
+      }}
     >
       {playing ? (
         <svg viewBox="0 0 24 24" className="h-8 w-8 fill-current">

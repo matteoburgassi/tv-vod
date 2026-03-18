@@ -16,11 +16,13 @@
 }
 
 html {
+  font-size: calc(100vw / 120);
   background-color: #120818;
   color: white;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
 }
 
 body {
@@ -33,6 +35,10 @@ body {
   overscroll-behavior: none;
   overflow: hidden;
   cursor: none;
+}
+
+img {
+  content-visibility: auto;
 }
 
 video {
@@ -69,4 +75,20 @@ video::-webkit-media-controls-enclosure {
 
 .player-container {
   background-color: black !important;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.04) 80%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
 }

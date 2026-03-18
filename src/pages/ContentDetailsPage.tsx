@@ -8,7 +8,8 @@ import type { DrmConfig } from '@digitalvirgo/drm-player';
 import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm } from '../utils/assets';
+import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
+import { resolveBestHlsStream } from '../utils/hlsUtils';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -92,17 +93,17 @@ export default function ContentDetailsPage() {
   const handlePlay = useCallback(async () => {
     if (!content || !contentId) return;
 
+    if (!user) {
+      navigate('/login', { state: { returnTo: `/content/${contentId}` } });
+      return;
+    }
+
     if (!isDrm) {
       const mainUrl = getMainStreamUrl(content.deliveries);
       const trailerUrl = getStreamUrl(content.deliveries);
       setPlayerUrl(mainUrl || trailerUrl);
       setDrmConfig(undefined);
       setShowPlayer(true);
-      return;
-    }
-
-    if (!user) {
-      setDrmError('Login required for DRM content');
       return;
     }
 
@@ -139,12 +140,14 @@ export default function ContentDetailsPage() {
     } finally {
       setDrmLoading(false);
     }
-  }, [content, contentId, isDrm, user]);
+  }, [content, contentId, isDrm, user, navigate]);
 
   if (loading) return <LoadingSpinner />;
   if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
 
-  const bg = getArtBackground(content.assets);
+  const rawBg = getArtBackground(content.assets);
+  const heroBg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.6)) : null;
+  const playerPoster = rawBg ? sizedUrl(rawBg, window.innerWidth, window.innerHeight) : null;
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
   const hasPlayableContent = !!(mainUrl || trailerUrl);
@@ -155,7 +158,7 @@ export default function ContentDetailsPage() {
         {showPlayer && playerUrl && (
           <VideoPlayer
             url={playerUrl}
-            poster={bg ?? undefined}
+            poster={playerPoster ?? undefined}
             drm={drmConfig}
             onClose={() => setShowPlayer(false)}
           />
@@ -163,12 +166,13 @@ export default function ContentDetailsPage() {
 
         <div className="relative min-h-[60vh] w-full overflow-hidden">
           {trailerUrl ? (
-            <HeroTrailer src={trailerUrl} poster={bg} />
-          ) : bg ? (
+            <HeroTrailer src={trailerUrl} poster={heroBg} />
+          ) : heroBg ? (
             <img
-              src={bg}
+              src={heroBg}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
+              decoding="async"
             />
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/50 to-[#120818]/30" />
@@ -183,9 +187,6 @@ export default function ContentDetailsPage() {
                 <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
                   {content.content_type}
                 </span>
-              )}
-              {isDrm && !user && (
-                <p className="mb-2 text-sm text-yellow-400">Login required to play this content</p>
               )}
               {drmError && (
                 <p className="mb-2 text-sm text-red-400">{drmError}</p>
@@ -221,26 +222,19 @@ export default function ContentDetailsPage() {
 }
 
 function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress });
-
-  useEffect(() => {
-    if (focused && btnRef.current) {
-      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    }
-  }, [focused]);
 
   return (
     <button
-      ref={(node) => {
-        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      }}
+      ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={loading ? undefined : onPress}
       disabled={loading}
-      className={`flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black transition-all duration-200 hover:bg-white/90 disabled:opacity-60 ${
-        focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
-      }`}
+      className="flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black disabled:opacity-60"
+      style={{
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+      }}
     >
       {loading ? (
         <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24">
@@ -252,31 +246,24 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
           <path d="M8 5v14l11-7z" />
         </svg>
       )}
-      {loading ? 'Loading…' : 'Play'}
+      {loading ? 'Loading...' : 'Play'}
     </button>
   );
 }
 
 function BackButton({ onPress }: { onPress: () => void }) {
-  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress });
-
-  useEffect(() => {
-    if (focused && btnRef.current) {
-      btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    }
-  }, [focused]);
 
   return (
     <button
-      ref={(node) => {
-        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      }}
+      ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={onPress}
-      className={`rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/25 ${
-        focused ? 'ring-3 ring-white scale-105 shadow-lg shadow-white/20' : ''
-      }`}
+      className="rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm"
+      style={{
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
+      }}
     >
       Back
     </button>
@@ -296,24 +283,38 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
     const video = videoRef.current;
     if (!video || !src) return;
 
+    let cancelled = false;
     const isHls = src.includes('.m3u8');
 
-    if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
-      import('hls.js').then(({ default: Hls }) => {
-        if (!Hls.isSupported()) return;
-        const hls = new Hls({ startLevel: -1 });
+    if (isHls) {
+      const setup = async () => {
+        const bestStream = await resolveBestHlsStream(src);
+        if (cancelled) return;
+
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = bestStream;
+          video.play().catch(() => {});
+          return;
+        }
+
+        const { default: Hls } = await import('hls.js');
+        if (cancelled || !Hls.isSupported()) return;
+
+        const hls = new Hls();
         hlsRef.current = hls;
-        hls.loadSource(src);
+        hls.loadSource(bestStream);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
         });
-      });
+      };
+      setup();
     } else {
       video.src = src;
     }
 
     return () => {
+      cancelled = true;
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
@@ -326,6 +327,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
           src={poster}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
         />
       )}
       <video
@@ -335,9 +337,11 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         loop
         playsInline
         onCanPlay={handleCanPlay}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-          loaded ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 1000ms ease-out',
+        }}
       />
     </>
   );

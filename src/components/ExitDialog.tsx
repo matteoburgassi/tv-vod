@@ -31,7 +31,10 @@ export default function ExitDialog({ onConfirm, onCancel }: ExitDialogProps) {
   }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{ transform: 'translate3d(0,0,0)' }}
+    >
       <FocusContext.Provider value={focusKey}>
         <div ref={ref} className="rounded-2xl bg-[#1e1028] px-12 py-10 text-center shadow-2xl">
           <h2 className="mb-8 text-2xl font-semibold text-white">Exit App?</h2>
@@ -63,11 +66,14 @@ function DialogButton({
     <button
       ref={ref}
       onClick={onPress}
-      className={`min-w-[120px] rounded-lg px-8 py-3 text-lg font-medium transition-all duration-200 ${
-        focused
-          ? 'scale-105 bg-white text-black shadow-lg shadow-white/20'
-          : 'bg-white/15 text-white hover:bg-white/25'
-      }`}
+      className="min-w-[6.25vw] rounded-lg px-8 py-3 text-lg font-medium"
+      style={{
+        backgroundColor: focused ? 'white' : 'rgba(255,255,255,0.15)',
+        color: focused ? 'black' : 'white',
+        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
+        boxShadow: focused ? '0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+        transition: 'transform 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out',
+      }}
     >
       {label}
     </button>

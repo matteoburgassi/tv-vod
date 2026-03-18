@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useTransition } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { fetchContentsByCategory, fetchRubricList } from '../services/api';
 import { HERO_RUBRIC_ID, CATEGORY_RUBRIC_IDS } from '../constants/api';
 import { mapKeyEvent } from '../utils/keyMap';
+import { getCoverImage } from '../utils/assets';
+import { preloadImages } from '../utils/imageCache';
 import type { ContentItem, RubricItem } from '../types/api';
 import Hero from '../components/Hero';
-import ContentRow from '../components/ContentRow';
+import ContentRow, { getCardFocusKey } from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ExitDialog from '../components/ExitDialog';
 
@@ -14,11 +16,18 @@ interface CategoryRow {
   items: ContentItem[];
 }
 
+const ROW_HEIGHT_VW = 18.75;
+const ROW_GAP_VW = 0.833;
+const ROW_VIRTUALIZE_BUFFER = 2;
+
 export default function HomePage() {
   const [heroItems, setHeroItems] = useState<ContentItem[]>([]);
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expectedRowCount, setExpectedRowCount] = useState(0);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [focusedRowIndex, setFocusedRowIndex] = useState(0);
+  const [, startTransition] = useTransition();
   const { ref, focusKey, focusSelf } = useFocusable({});
 
   useEffect(() => {
@@ -45,6 +54,7 @@ export default function HomePage() {
 
         if (cancelled) return;
         setHeroItems(hero);
+        setExpectedRowCount(rubrics.length);
 
         const rowData: CategoryRow[] = [];
         const batches = [];
@@ -60,8 +70,22 @@ export default function HomePage() {
               return { rubric, items };
             }),
           );
-          rowData.push(...results.filter((r) => r.items.length > 0));
-          setRows([...rowData]);
+          const validResults = results.filter((r) => r.items.length > 0);
+          rowData.push(...validResults);
+
+          const coverUrls: string[] = [];
+          for (const r of validResults) {
+            for (const item of r.items) {
+              const url = getCoverImage(item.assets);
+              if (url) coverUrls.push(url);
+            }
+          }
+          preloadImages(coverUrls);
+
+          const snapshot = [...rowData];
+          startTransition(() => {
+            setRows(snapshot);
+          });
         }
       } catch (err) {
         console.error('Failed to load home data:', err);
@@ -84,24 +108,32 @@ export default function HomePage() {
   );
 
   const makeRowArrowPress = useCallback(
-    (rowIndex: number) => (direction: string) => {
+    (rowIndex: number) => (direction: string, cardIndex: number) => {
       if (direction === 'up') {
         if (rowIndex === 0) {
           setFocus('hero');
         } else {
-          setFocus(rowFocusKeys[rowIndex - 1]);
+          const targetRow = rowIndex - 1;
+          setFocusedRowIndex(targetRow);
+          const targetCount = rows[targetRow]?.items.length ?? 0;
+          const clampedIndex = Math.min(cardIndex, targetCount - 1);
+          setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
         }
         return false;
       }
       if (direction === 'down') {
-        if (rowIndex < rowFocusKeys.length - 1) {
-          setFocus(rowFocusKeys[rowIndex + 1]);
+        if (rowIndex < rows.length - 1) {
+          const targetRow = rowIndex + 1;
+          setFocusedRowIndex(targetRow);
+          const targetCount = rows[targetRow]?.items.length ?? 0;
+          const clampedIndex = Math.min(cardIndex, targetCount - 1);
+          setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
         }
         return false;
       }
       return true;
     },
-    [rowFocusKeys],
+    [rows],
   );
 
   if (loading && !heroItems.length) return <LoadingSpinner />;
@@ -110,18 +142,39 @@ export default function HomePage() {
     <FocusContext.Provider value={focusKey}>
       <div ref={ref}>
         {heroItems.length > 0 && (
-          <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rowFocusKeys[0]} />
+          <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rows.length > 0 ? getCardFocusKey(0, 0) : rowFocusKeys[0]} />
         )}
         <div className="relative z-10 -mt-6 pb-20">
-          {rows.map((row, i) => (
-            <ContentRow
-              key={row.rubric.rubric_id}
-              title={row.rubric.rubric_title}
-              items={row.items}
-              focusKeyOverride={rowFocusKeys[i]}
-              onArrowPress={makeRowArrowPress(i)}
+          {rows.map((row, i) => {
+            const inRange = i >= Math.max(0, focusedRowIndex - ROW_VIRTUALIZE_BUFFER)
+              && i <= Math.min(rows.length - 1, focusedRowIndex + ROW_VIRTUALIZE_BUFFER);
+            if (!inRange) {
+              return (
+                <div
+                  key={row.rubric.rubric_id}
+                  style={{ height: `${ROW_HEIGHT_VW}vw`, marginBottom: `${ROW_GAP_VW}vw`, contain: 'strict' }}
+                />
+              );
+            }
+            return (
+              <ContentRow
+                key={row.rubric.rubric_id}
+                title={row.rubric.rubric_title}
+                items={row.items}
+                rowIndex={i}
+                focusKeyOverride={rowFocusKeys[i]}
+                onArrowPress={makeRowArrowPress(i)}
+              />
+            );
+          })}
+          {loading && expectedRowCount > rows.length && (
+            <div
+              style={{
+                height: `${(expectedRowCount - rows.length) * (ROW_HEIGHT_VW + ROW_GAP_VW)}vw`,
+                contain: 'strict',
+              }}
             />
-          ))}
+          )}
           {loading && <LoadingSpinner />}
         </div>
       </div>

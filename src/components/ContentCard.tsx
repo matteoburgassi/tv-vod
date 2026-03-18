@@ -50,9 +50,10 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
       onClick={onPress}
     >
       <div
-        className="relative overflow-hidden rounded-lg"
+        className="relative overflow-hidden rounded-lg bg-white/5"
         style={{
-          aspectRatio: '3/4',
+          width: 180,
+          height: 240,
           border: focused ? '3px solid white' : '3px solid transparent',
           transition: 'border-color 200ms ease-out',
         }}
@@ -61,8 +62,9 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
           <img
             src={cover}
             alt={item.title}
+            width={180}
+            height={240}
             className="h-full w-full object-cover"
-            loading="lazy"
             decoding="async"
           />
         ) : (

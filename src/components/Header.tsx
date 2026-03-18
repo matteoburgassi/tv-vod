@@ -29,7 +29,7 @@ export default function Header() {
       if (!ticking) {
         ticking = true;
         requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 40);
+          setScrolled(window.scrollY > window.innerWidth * 0.02);
           ticking = false;
         });
       }

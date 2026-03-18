@@ -16,9 +16,11 @@ interface ContentRowProps {
   onArrowPress?: (direction: string, cardIndex: number) => boolean;
 }
 
-const CARD_WIDTH = 180;
-const CARD_GAP = 16;
-const SCROLL_PADDING = 48;
+const CARD_W_VW = 9.375;
+const CARD_GAP_VW = 0.833;
+const SCROLL_PAD_VW = 2.5;
+const CARD_H_VW = 14.583;
+const CARD_STEP_VW = CARD_W_VW + CARD_GAP_VW;
 const ANIM_DURATION = 120;
 const VIRTUALIZE_BUFFER = 4;
 
@@ -51,6 +53,11 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       const strip = stripRef.current;
       if (!container || !strip) return;
 
+      const vw = window.innerWidth / 100;
+      const scrollPadPx = SCROLL_PAD_VW * vw;
+      const cardWPx = CARD_W_VW * vw;
+      const cardGapPx = CARD_GAP_VW * vw;
+
       const viewportWidth = container.clientWidth;
       const currentOffset = offsetRef.current;
 
@@ -58,26 +65,26 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       const cardLeft = wrapper ? wrapper.offsetLeft : el.offsetLeft;
       const cardRight = cardLeft + (wrapper ? wrapper.offsetWidth : el.offsetWidth);
 
-      const visibleLeft = -currentOffset + SCROLL_PADDING;
-      const visibleRight = -currentOffset + viewportWidth - SCROLL_PADDING;
+      const visibleLeft = -currentOffset + scrollPadPx;
+      const visibleRight = -currentOffset + viewportWidth - scrollPadPx;
 
       let newOffset = currentOffset;
 
       if (cardLeft < visibleLeft) {
-        newOffset = -(cardLeft - SCROLL_PADDING);
+        newOffset = -(cardLeft - scrollPadPx);
       } else if (cardRight > visibleRight) {
-        newOffset = -(cardRight - viewportWidth + SCROLL_PADDING);
+        newOffset = -(cardRight - viewportWidth + scrollPadPx);
       }
 
-      const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
+      const totalWidth = items.length * cardWPx + (items.length - 1) * cardGapPx;
       const maxOffset = 0;
-      const scrollableWidth = totalWidth + SCROLL_PADDING * 2;
+      const scrollableWidth = totalWidth + scrollPadPx * 2;
       const minOffset = scrollableWidth > viewportWidth
         ? -(scrollableWidth - viewportWidth)
         : 0;
       newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
 
-      const cardStep = CARD_WIDTH + CARD_GAP;
+      const cardStep = cardWPx + cardGapPx;
       const viewStart = Math.floor(Math.max(0, -newOffset) / cardStep);
       const viewEnd = Math.ceil((-newOffset + viewportWidth) / cardStep);
       setVisibleRange([
@@ -100,6 +107,8 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
         );
       }
 
+      const headerThreshold = 4.167 * vw;
+      const bottomPad = 1.042 * vw;
       const rowEl = container.closest('[data-content-row]');
       if (rowEl) {
         const rect = rowEl.getBoundingClientRect();
@@ -107,10 +116,10 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
         const scrollEl = document.getElementById('page-scroll-container');
         if (scrollEl) {
           let delta = 0;
-          if (rect.top < 80) {
-            delta = rect.top - 80;
+          if (rect.top < headerThreshold) {
+            delta = rect.top - headerThreshold;
           } else if (rect.bottom > viewportH) {
-            delta = rect.bottom - viewportH + 20;
+            delta = rect.bottom - viewportH + bottomPad;
           }
           if (delta !== 0) {
             const targetTop = scrollEl.scrollTop + delta;
@@ -146,7 +155,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
 
   if (!items.length) return null;
 
-  const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
+  const totalWidthVw = items.length * CARD_W_VW + (items.length - 1) * CARD_GAP_VW;
 
   return (
     <FocusContext.Provider value={focusKey}>
@@ -173,8 +182,8 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
           <div
             ref={stripRef}
             style={{
-              width: totalWidth,
-              height: 280,
+              width: `${totalWidthVw}vw`,
+              height: `${CARD_H_VW}vw`,
               position: 'relative',
               willChange: 'transform',
               transform: 'translate3d(0, 0, 0)',
@@ -185,9 +194,9 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
                 key={item.content_id}
                 style={{
                   position: 'absolute',
-                  left: i * (CARD_WIDTH + CARD_GAP),
+                  left: `${i * CARD_STEP_VW}vw`,
                   top: 0,
-                  width: CARD_WIDTH,
+                  width: `${CARD_W_VW}vw`,
                 }}
               >
                 <ContentCard

@@ -16,8 +16,8 @@ interface CategoryRow {
   items: ContentItem[];
 }
 
-const ROW_HEIGHT = 360;
-const ROW_GAP = 16;
+const ROW_HEIGHT_VW = 18.75;
+const ROW_GAP_VW = 0.833;
 const ROW_VIRTUALIZE_BUFFER = 2;
 
 export default function HomePage() {
@@ -152,7 +152,7 @@ export default function HomePage() {
               return (
                 <div
                   key={row.rubric.rubric_id}
-                  style={{ height: ROW_HEIGHT, marginBottom: 16, contain: 'strict' }}
+                  style={{ height: `${ROW_HEIGHT_VW}vw`, marginBottom: `${ROW_GAP_VW}vw`, contain: 'strict' }}
                 />
               );
             }
@@ -170,7 +170,7 @@ export default function HomePage() {
           {loading && expectedRowCount > rows.length && (
             <div
               style={{
-                height: (expectedRowCount - rows.length) * (ROW_HEIGHT + ROW_GAP),
+                height: `${(expectedRowCount - rows.length) * (ROW_HEIGHT_VW + ROW_GAP_VW)}vw`,
                 contain: 'strict',
               }}
             />

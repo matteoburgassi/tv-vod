@@ -51,7 +51,7 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
           (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
           (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         }}
-        style={{ width: 180, height: 280 }}
+        style={{ width: '9.375vw', height: '14.583vw' }}
       />
     );
   }
@@ -64,8 +64,8 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
       }}
       className="shrink-0"
       style={{
-        width: 180,
-        height: 280,
+        width: '9.375vw',
+        height: '14.583vw',
         contain: 'layout style',
       }}
     >
@@ -81,9 +81,9 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
         <div
           className="relative overflow-hidden rounded-lg bg-white/5"
           style={{
-            width: 180,
-            height: 240,
-            border: focused ? '3px solid white' : '3px solid transparent',
+            width: '9.375vw',
+            height: '12.5vw',
+            border: focused ? '0.16vw solid white' : '0.16vw solid transparent',
             transition: 'border-color 200ms ease-out',
           }}
         >
@@ -93,8 +93,6 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
               <img
                 src={cover}
                 alt={item.title}
-                width={180}
-                height={240}
                 className="h-full w-full object-cover"
                 loading="eager"
                 decoding="async"

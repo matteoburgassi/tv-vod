@@ -66,7 +66,7 @@ function DialogButton({
     <button
       ref={ref}
       onClick={onPress}
-      className="min-w-[120px] rounded-lg px-8 py-3 text-lg font-medium"
+      className="min-w-[6.25vw] rounded-lg px-8 py-3 text-lg font-medium"
       style={{
         backgroundColor: focused ? 'white' : 'rgba(255,255,255,0.15)',
         color: focused ? 'black' : 'white',

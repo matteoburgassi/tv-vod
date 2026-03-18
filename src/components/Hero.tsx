@@ -68,7 +68,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
           (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
           (heroRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
         }}
-        className="relative h-[70vh] min-h-[400px] w-full overflow-hidden"
+        className="relative h-[70vh] min-h-[20.83vw] w-full overflow-hidden"
         style={{ contain: 'layout style' }}
       >
         {bg && (
@@ -124,7 +124,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
                 key={i}
                 className="h-1.5 rounded-full"
                 style={{
-                  width: i === activeIndex ? 32 : 12,
+                  width: i === activeIndex ? '1.667vw' : '0.625vw',
                   backgroundColor: i === activeIndex ? 'white' : 'rgba(255,255,255,0.3)',
                   transition: 'width 300ms ease-out, background-color 300ms ease-out',
                 }}

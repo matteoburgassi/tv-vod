@@ -1,11 +1,11 @@
-import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { memo, useCallback, useRef } from 'react';
 import {
   useFocusable,
   FocusContext,
 } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import ContentCard from './ContentCard';
-import { smoothScrollTo } from '../utils/smoothScroll';
+import { animateValue } from '../utils/smoothScroll';
 
 interface ContentRowProps {
   title: string;
@@ -17,8 +17,8 @@ interface ContentRowProps {
 
 const CARD_WIDTH = 180;
 const CARD_GAP = 16;
-const BUFFER = 4;
 const SCROLL_PADDING = 48;
+const ANIM_DURATION = 120;
 
 export default memo(function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
@@ -26,81 +26,88 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
     trackChildren: true,
   });
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
-  const [visibleRange, setVisibleRange] = useState<[number, number]>([0, 14]);
-
-  const computeRange = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const scrollLeft = el.scrollLeft;
-    const viewportWidth = el.clientWidth;
-    const stride = CARD_WIDTH + CARD_GAP;
-
-    const firstVisible = Math.floor(scrollLeft / stride);
-    const lastVisible = Math.ceil((scrollLeft + viewportWidth) / stride);
-
-    const start = Math.max(0, firstVisible - BUFFER);
-    const end = Math.min(items.length - 1, lastVisible + BUFFER);
-
-    setVisibleRange((prev) => {
-      if (prev[0] === start && prev[1] === end) return prev;
-      return [start, end];
-    });
-  }, [items.length]);
-
-  const scheduleRangeUpdate = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(computeRange);
-  }, [computeRange]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    computeRange();
-    el.addEventListener('scroll', scheduleRangeUpdate, { passive: true });
-    return () => {
-      el.removeEventListener('scroll', scheduleRangeUpdate);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [computeRange, scheduleRangeUpdate]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
+  const animKeyRef = useRef({});
+  const vertAnimKeyRef = useRef({});
 
   const handleCardFocused = useCallback((el: HTMLDivElement) => {
-    const container = scrollRef.current;
-    if (!container) return;
+    const container = containerRef.current;
+    const strip = stripRef.current;
+    if (!container || !strip) return;
 
-    const cardLeft = el.offsetLeft - SCROLL_PADDING;
-    const cardRight = el.offsetLeft + el.offsetWidth + SCROLL_PADDING;
-    const viewLeft = container.scrollLeft;
-    const viewRight = container.scrollLeft + container.clientWidth;
+    const viewportWidth = container.clientWidth;
+    const currentOffset = offsetRef.current;
 
-    if (cardLeft < viewLeft) {
-      smoothScrollTo(container, cardLeft, 'x', 150);
-    } else if (cardRight > viewRight) {
-      smoothScrollTo(container, cardRight - container.clientWidth, 'x', 150);
+    const cardLeft = el.offsetLeft;
+    const cardRight = cardLeft + el.offsetWidth;
+
+    const visibleLeft = -currentOffset + SCROLL_PADDING;
+    const visibleRight = -currentOffset + viewportWidth - SCROLL_PADDING;
+
+    let newOffset = currentOffset;
+
+    if (cardLeft < visibleLeft) {
+      newOffset = -(cardLeft - SCROLL_PADDING);
+    } else if (cardRight > visibleRight) {
+      newOffset = -(cardRight - viewportWidth + SCROLL_PADDING);
     }
 
-    const rowEl = container.parentElement;
+    const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
+    const maxOffset = 0;
+    const minOffset = -(totalWidth - viewportWidth + SCROLL_PADDING * 2);
+    newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+
+    if (newOffset !== currentOffset) {
+      animateValue(
+        animKeyRef.current,
+        currentOffset,
+        newOffset,
+        ANIM_DURATION,
+        (v) => {
+          offsetRef.current = v;
+          if (strip) {
+            strip.style.transform = `translate3d(${v}px, 0, 0)`;
+          }
+        },
+      );
+    }
+
+    const rowEl = container.closest('[data-content-row]');
     if (rowEl) {
       const rect = rowEl.getBoundingClientRect();
       const viewportH = window.innerHeight;
-      if (rect.top < 80) {
-        smoothScrollTo(window, window.scrollY + rect.top - 80, 'y', 150);
-      } else if (rect.bottom > viewportH - 40) {
-        smoothScrollTo(window, window.scrollY + rect.bottom - viewportH + 40, 'y', 150);
+      const scrollEl = document.getElementById('page-scroll-container');
+      if (scrollEl) {
+        let targetTop: number | null = null;
+        if (rect.top < 80) {
+          targetTop = scrollEl.scrollTop + rect.top - 80;
+        } else if (rect.bottom > viewportH - 40) {
+          targetTop = scrollEl.scrollTop + rect.bottom - viewportH + 40;
+        }
+        if (targetTop !== null) {
+          animateValue(
+            vertAnimKeyRef.current,
+            scrollEl.scrollTop,
+            targetTop,
+            ANIM_DURATION,
+            (v) => { scrollEl.scrollTop = v; },
+          );
+        }
       }
     }
-  }, []);
+  }, [items.length]);
 
   if (!items.length) return null;
 
   const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
-  const [startIdx, endIdx] = visibleRange;
 
   return (
     <FocusContext.Provider value={focusKey}>
       <div
         ref={ref}
+        data-content-row
         className="mb-4"
         style={{ contain: 'layout style' }}
         onClick={() => focusSelf()}
@@ -115,41 +122,37 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
           {title}
         </h2>
         <div
-          ref={scrollRef}
-          className="overflow-x-auto px-12 py-4"
-          style={{
-            scrollPaddingInline: '3rem',
-            scrollbarWidth: 'none',
-          }}
+          ref={containerRef}
+          className="overflow-hidden px-12 py-4"
         >
           <div
+            ref={stripRef}
             style={{
               width: totalWidth,
               height: 280,
               position: 'relative',
+              willChange: 'transform',
+              transform: 'translate3d(0, 0, 0)',
             }}
           >
-            {items.map((item, i) => {
-              if (i < startIdx || i > endIdx) return null;
-              return (
-                <div
-                  key={item.content_id}
-                  style={{
-                    position: 'absolute',
-                    left: i * (CARD_WIDTH + CARD_GAP),
-                    top: 0,
-                    width: CARD_WIDTH,
-                  }}
-                >
-                  <ContentCard
-                    item={item}
-                    showBadge={showBadge}
-                    onArrowPress={onArrowPress}
-                    onFocused={handleCardFocused}
-                  />
-                </div>
-              );
-            })}
+            {items.map((item, i) => (
+              <div
+                key={item.content_id}
+                style={{
+                  position: 'absolute',
+                  left: i * (CARD_WIDTH + CARD_GAP),
+                  top: 0,
+                  width: CARD_WIDTH,
+                }}
+              >
+                <ContentCard
+                  item={item}
+                  showBadge={showBadge}
+                  onArrowPress={onArrowPress}
+                  onFocused={handleCardFocused}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

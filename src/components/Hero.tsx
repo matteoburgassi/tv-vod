@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import { getArtBackground, getHighlight, getHighlightTitle } from '../utils/assets';
+import { animateValue } from '../utils/smoothScroll';
 
 interface HeroProps {
   items: ContentItem[];
@@ -19,11 +20,16 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
     trackChildren: true,
   });
 
+  const heroAnimKey = useRef({});
+
   useEffect(() => {
-    if (hasFocusedChild && heroRef.current) {
-      requestAnimationFrame(() => {
-        heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+    if (hasFocusedChild) {
+      const scrollEl = document.getElementById('page-scroll-container');
+      if (scrollEl) {
+        animateValue(heroAnimKey.current, scrollEl.scrollTop, 0, 120, (v) => {
+          scrollEl.scrollTop = v;
+        });
+      }
     }
   }, [hasFocusedChild]);
 
@@ -144,14 +150,6 @@ function HeroButton({
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
-
-  useEffect(() => {
-    if (focused && btnRef.current) {
-      requestAnimationFrame(() => {
-        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      });
-    }
-  }, [focused]);
 
   return (
     <button

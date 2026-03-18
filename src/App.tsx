@@ -26,7 +26,17 @@ function AppLayout() {
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="min-h-screen bg-[#120818]">
+      <div
+        ref={ref}
+        id="page-scroll-container"
+        className="bg-[#120818]"
+        style={{
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollbarWidth: 'none',
+        }}
+      >
         <Header />
         <main>
           <Routes>

@@ -222,23 +222,11 @@ export default function ContentDetailsPage() {
 }
 
 function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress });
-
-  useEffect(() => {
-    if (focused && btnRef.current) {
-      requestAnimationFrame(() => {
-        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      });
-    }
-  }, [focused]);
 
   return (
     <button
-      ref={(node) => {
-        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      }}
+      ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={loading ? undefined : onPress}
       disabled={loading}
       className="flex items-center gap-2 rounded-lg bg-white px-8 py-3 text-lg font-medium text-black disabled:opacity-60"
@@ -265,23 +253,11 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
 }
 
 function BackButton({ onPress }: { onPress: () => void }) {
-  const btnRef = useRef<HTMLButtonElement>(null);
   const { ref, focused } = useFocusable({ onEnterPress: onPress });
-
-  useEffect(() => {
-    if (focused && btnRef.current) {
-      requestAnimationFrame(() => {
-        btnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      });
-    }
-  }, [focused]);
 
   return (
     <button
-      ref={(node) => {
-        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-        (btnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      }}
+      ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={onPress}
       className="rounded-lg bg-white/15 px-8 py-3 text-lg font-medium text-white backdrop-blur-sm"
       style={{

@@ -24,7 +24,6 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("webview", "start")
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,

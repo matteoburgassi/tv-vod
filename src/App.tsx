@@ -13,6 +13,15 @@ init({
   useGetBoundingClientRect: true,
 });
 
+const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
+const NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+document.addEventListener('keydown', (e) => {
+  const el = document.activeElement;
+  if (el && INPUT_TAGS.has(el.tagName) && NAV_KEYS.has(e.key)) {
+    e.stopImmediatePropagation();
+  }
+}, true);
+
 function AppLayout() {
   const { ref, focusKey } = useFocusable({
     isFocusBoundary: false,

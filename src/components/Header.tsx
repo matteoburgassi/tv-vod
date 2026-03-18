@@ -73,11 +73,15 @@ function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
     <button
       ref={ref}
       onClick={onPress}
-      className={`text-2xl font-semibold tracking-tight text-white transition-all duration-200 ${
+      className={`transition-all duration-200 ${
         focused ? 'scale-105 drop-shadow-[0_0_8px_rgba(233,30,140,0.5)]' : ''
       }`}
     >
-      Play<span className="text-fuchsia-500">VOD</span>
+      <img
+        src="/playvod-logo-landscape-light.1920-10.svg"
+        alt="PlayVOD"
+        className="h-8"
+      />
     </button>
   );
 }

@@ -56,7 +56,10 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
 
     const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
     const maxOffset = 0;
-    const minOffset = -(totalWidth - viewportWidth + SCROLL_PADDING * 2);
+    const scrollableWidth = totalWidth + SCROLL_PADDING * 2;
+    const minOffset = scrollableWidth > viewportWidth
+      ? -(scrollableWidth - viewportWidth)
+      : 0;
     newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
 
     if (newOffset !== currentOffset) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useTransition } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { fetchContentsByCategory, fetchRubricList } from '../services/api';
 import { HERO_RUBRIC_ID, CATEGORY_RUBRIC_IDS } from '../constants/api';
@@ -14,11 +14,16 @@ interface CategoryRow {
   items: ContentItem[];
 }
 
+const ROW_HEIGHT = 360;
+const ROW_GAP = 16;
+
 export default function HomePage() {
   const [heroItems, setHeroItems] = useState<ContentItem[]>([]);
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expectedRowCount, setExpectedRowCount] = useState(0);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [, startTransition] = useTransition();
   const { ref, focusKey, focusSelf } = useFocusable({});
 
   useEffect(() => {
@@ -45,6 +50,7 @@ export default function HomePage() {
 
         if (cancelled) return;
         setHeroItems(hero);
+        setExpectedRowCount(rubrics.length);
 
         const rowData: CategoryRow[] = [];
         const batches = [];
@@ -61,7 +67,10 @@ export default function HomePage() {
             }),
           );
           rowData.push(...results.filter((r) => r.items.length > 0));
-          setRows([...rowData]);
+          const snapshot = [...rowData];
+          startTransition(() => {
+            setRows(snapshot);
+          });
         }
       } catch (err) {
         console.error('Failed to load home data:', err);
@@ -122,6 +131,14 @@ export default function HomePage() {
               onArrowPress={makeRowArrowPress(i)}
             />
           ))}
+          {loading && expectedRowCount > rows.length && (
+            <div
+              style={{
+                height: (expectedRowCount - rows.length) * (ROW_HEIGHT + ROW_GAP),
+                contain: 'strict',
+              }}
+            />
+          )}
           {loading && <LoadingSpinner />}
         </div>
       </div>

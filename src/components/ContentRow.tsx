@@ -27,7 +27,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       <div
         ref={ref}
         className="mb-4"
-        style={{ contain: 'layout style', contentVisibility: 'auto', containIntrinsicSize: '0 320px' }}
+        style={{ contain: 'layout style', contentVisibility: 'auto', containIntrinsicSize: 'auto none auto 360px' }}
         onClick={() => focusSelf()}
       >
         <h2

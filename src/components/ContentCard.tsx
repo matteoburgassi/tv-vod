@@ -9,9 +9,10 @@ interface ContentCardProps {
   item: ContentItem;
   showBadge?: boolean;
   onArrowPress?: (direction: string) => boolean;
+  onFocused?: (el: HTMLDivElement) => void;
 }
 
-export default memo(function ContentCard({ item, showBadge = false, onArrowPress }: ContentCardProps) {
+export default memo(function ContentCard({ item, showBadge = false, onArrowPress, onFocused }: ContentCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -25,12 +26,10 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
   });
 
   useEffect(() => {
-    if (focused && cardRef.current) {
-      requestAnimationFrame(() => {
-        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      });
+    if (focused && cardRef.current && onFocused) {
+      onFocused(cardRef.current);
     }
-  }, [focused]);
+  }, [focused, onFocused]);
 
   const cover = getCoverImage(item.assets);
   const [loaded, setLoaded] = useState(() => (cover ? isImageCached(cover) : false));
@@ -50,9 +49,8 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
       style={{
         width: 180,
         contain: 'layout style paint',
-        transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+        transform: focused ? 'scale(1.1)' : 'scale(1)',
         transition: 'transform 200ms ease-out',
-        willChange: 'transform',
       }}
       onClick={onPress}
     >
@@ -72,6 +70,8 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
             width={180}
             height={240}
             className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
             style={{
               opacity: loaded ? 1 : 0,
               transition: 'opacity 150ms ease-out',

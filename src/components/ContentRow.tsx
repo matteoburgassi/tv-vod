@@ -17,6 +17,7 @@ interface ContentRowProps {
 const CARD_WIDTH = 180;
 const CARD_GAP = 16;
 const BUFFER = 4;
+const SCROLL_PADDING = 48;
 
 export default memo(function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
@@ -25,9 +26,10 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [visibleRange, setVisibleRange] = useState<[number, number]>([0, 12]);
+  const rafRef = useRef<number>(0);
+  const [visibleRange, setVisibleRange] = useState<[number, number]>([0, 14]);
 
-  const updateVisibleRange = useCallback(() => {
+  const computeRange = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     const scrollLeft = el.scrollLeft;
@@ -46,13 +48,48 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
     });
   }, [items.length]);
 
+  const scheduleRangeUpdate = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(computeRange);
+  }, [computeRange]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    updateVisibleRange();
-    el.addEventListener('scroll', updateVisibleRange, { passive: true });
-    return () => el.removeEventListener('scroll', updateVisibleRange);
-  }, [updateVisibleRange]);
+    computeRange();
+    el.addEventListener('scroll', scheduleRangeUpdate, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', scheduleRangeUpdate);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [computeRange, scheduleRangeUpdate]);
+
+  const handleCardFocused = useCallback((el: HTMLDivElement) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const cardLeft = el.offsetLeft - SCROLL_PADDING;
+    const cardRight = el.offsetLeft + el.offsetWidth + SCROLL_PADDING;
+    const viewLeft = container.scrollLeft;
+    const viewRight = container.scrollLeft + container.clientWidth;
+
+    if (cardLeft < viewLeft) {
+      container.scrollLeft = cardLeft;
+    } else if (cardRight > viewRight) {
+      container.scrollLeft = cardRight - container.clientWidth;
+    }
+
+    const rowEl = container.parentElement;
+    if (rowEl) {
+      const rect = rowEl.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      if (rect.top < 80) {
+        window.scrollBy({ top: rect.top - 80, behavior: 'instant' as ScrollBehavior });
+      } else if (rect.bottom > viewportH - 40) {
+        window.scrollBy({ top: rect.bottom - viewportH + 40, behavior: 'instant' as ScrollBehavior });
+      }
+    }
+  }, []);
 
   if (!items.length) return null;
 
@@ -64,7 +101,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       <div
         ref={ref}
         className="mb-4"
-        style={{ contain: 'layout style', contentVisibility: 'auto', containIntrinsicSize: 'auto none auto 360px' }}
+        style={{ contain: 'layout style' }}
         onClick={() => focusSelf()}
       >
         <h2
@@ -79,7 +116,10 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
         <div
           ref={scrollRef}
           className="overflow-x-auto px-12 py-4"
-          style={{ scrollPaddingInline: '3rem' }}
+          style={{
+            scrollPaddingInline: '3rem',
+            scrollbarWidth: 'none',
+          }}
         >
           <div
             style={{
@@ -100,7 +140,12 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
                     width: CARD_WIDTH,
                   }}
                 >
-                  <ContentCard item={item} showBadge={showBadge} onArrowPress={onArrowPress} />
+                  <ContentCard
+                    item={item}
+                    showBadge={showBadge}
+                    onArrowPress={onArrowPress}
+                    onFocused={handleCardFocused}
+                  />
                 </div>
               );
             })}

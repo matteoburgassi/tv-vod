@@ -40,8 +40,9 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
     const viewportWidth = container.clientWidth;
     const currentOffset = offsetRef.current;
 
-    const cardLeft = el.offsetLeft;
-    const cardRight = cardLeft + el.offsetWidth;
+    const wrapper = el.parentElement as HTMLElement | null;
+    const cardLeft = wrapper ? wrapper.offsetLeft : el.offsetLeft;
+    const cardRight = cardLeft + (wrapper ? wrapper.offsetWidth : el.offsetWidth);
 
     const visibleLeft = -currentOffset + SCROLL_PADDING;
     const visibleRight = -currentOffset + viewportWidth - SCROLL_PADDING;

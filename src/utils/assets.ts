@@ -5,7 +5,7 @@ const COVER_RATIO_PRIORITY = ['portrait-3-4', 'portrait-2-3', 'portrait-9-16'];
 export function sizedUrl(url: string, w: number, h?: number): string {
   const dpr = window.devicePixelRatio || 1;
   const sep = url.includes('?') ? '&' : '?';
-  const params = `width=${Math.round(w * dpr)}` + (h != null ? `&height=${Math.round(h * dpr)}` : '');
+  const params = `width=${Math.round(w * dpr)}` + (h != null ? `&height=${Math.round(h * dpr)}` : '') + '&fit=inside';
   return `${url}${sep}${params}`;
 }
 

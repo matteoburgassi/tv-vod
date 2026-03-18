@@ -8,11 +8,12 @@ import { isImageCached, preloadImage } from '../utils/imageCache';
 interface ContentCardProps {
   item: ContentItem;
   showBadge?: boolean;
+  focusKeyOverride?: string;
   onArrowPress?: (direction: string) => boolean;
   onFocused?: (el: HTMLDivElement) => void;
 }
 
-export default memo(function ContentCard({ item, showBadge = false, onArrowPress, onFocused }: ContentCardProps) {
+export default memo(function ContentCard({ item, showBadge = false, focusKeyOverride, onArrowPress, onFocused }: ContentCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +22,7 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
   }, [navigate, item.content_id]);
 
   const { ref, focused } = useFocusable({
+    focusKey: focusKeyOverride,
     onEnterPress: onPress,
     onArrowPress,
   });

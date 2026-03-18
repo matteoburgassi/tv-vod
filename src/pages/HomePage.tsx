@@ -7,7 +7,7 @@ import { getCoverImage } from '../utils/assets';
 import { preloadImages } from '../utils/imageCache';
 import type { ContentItem, RubricItem } from '../types/api';
 import Hero from '../components/Hero';
-import ContentRow from '../components/ContentRow';
+import ContentRow, { getCardFocusKey } from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ExitDialog from '../components/ExitDialog';
 
@@ -106,24 +106,30 @@ export default function HomePage() {
   );
 
   const makeRowArrowPress = useCallback(
-    (rowIndex: number) => (direction: string) => {
+    (rowIndex: number) => (direction: string, cardIndex: number) => {
       if (direction === 'up') {
         if (rowIndex === 0) {
           setFocus('hero');
         } else {
-          setFocus(rowFocusKeys[rowIndex - 1]);
+          const targetRow = rowIndex - 1;
+          const targetCount = rows[targetRow]?.items.length ?? 0;
+          const clampedIndex = Math.min(cardIndex, targetCount - 1);
+          setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
         }
         return false;
       }
       if (direction === 'down') {
-        if (rowIndex < rowFocusKeys.length - 1) {
-          setFocus(rowFocusKeys[rowIndex + 1]);
+        if (rowIndex < rows.length - 1) {
+          const targetRow = rowIndex + 1;
+          const targetCount = rows[targetRow]?.items.length ?? 0;
+          const clampedIndex = Math.min(cardIndex, targetCount - 1);
+          setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
         }
         return false;
       }
       return true;
     },
-    [rowFocusKeys],
+    [rows],
   );
 
   if (loading && !heroItems.length) return <LoadingSpinner />;
@@ -132,7 +138,7 @@ export default function HomePage() {
     <FocusContext.Provider value={focusKey}>
       <div ref={ref}>
         {heroItems.length > 0 && (
-          <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rowFocusKeys[0]} />
+          <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rows.length > 0 ? getCardFocusKey(0, 0) : rowFocusKeys[0]} />
         )}
         <div className="relative z-10 -mt-6 pb-20">
           {rows.map((row, i) => (
@@ -140,6 +146,7 @@ export default function HomePage() {
               key={row.rubric.rubric_id}
               title={row.rubric.rubric_title}
               items={row.items}
+              rowIndex={i}
               focusKeyOverride={rowFocusKeys[i]}
               onArrowPress={makeRowArrowPress(i)}
             />

@@ -12,7 +12,8 @@ interface ContentRowProps {
   items: ContentItem[];
   showBadge?: boolean;
   focusKeyOverride?: string;
-  onArrowPress?: (direction: string) => boolean;
+  rowIndex?: number;
+  onArrowPress?: (direction: string, cardIndex: number) => boolean;
 }
 
 const CARD_WIDTH = 180;
@@ -20,7 +21,11 @@ const CARD_GAP = 16;
 const SCROLL_PADDING = 48;
 const ANIM_DURATION = 120;
 
-export default memo(function ContentRow({ title, items, showBadge = false, focusKeyOverride, onArrowPress }: ContentRowProps) {
+export function getCardFocusKey(rowIndex: number, cardIndex: number) {
+  return `row-${rowIndex}-card-${cardIndex}`;
+}
+
+export default memo(function ContentRow({ title, items, showBadge = false, focusKeyOverride, rowIndex = 0, onArrowPress }: ContentRowProps) {
   const { ref, focusKey, focusSelf, hasFocusedChild } = useFocusable({
     focusKey: focusKeyOverride,
     trackChildren: true,
@@ -31,8 +36,10 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
   const offsetRef = useRef(0);
   const animKeyRef = useRef({});
   const vertAnimKeyRef = useRef({});
+  const focusedCardIndexRef = useRef(0);
 
-  const handleCardFocused = useCallback((el: HTMLDivElement) => {
+  const handleCardFocused = useCallback((el: HTMLDivElement, cardIndex: number) => {
+    focusedCardIndexRef.current = cardIndex;
     const container = containerRef.current;
     const strip = stripRef.current;
     if (!container || !strip) return;
@@ -104,6 +111,23 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
     }
   }, [items.length]);
 
+  const makeCardArrowPress = useCallback(
+    (cardIndex: number) => (direction: string) => {
+      if (onArrowPress && (direction === 'up' || direction === 'down')) {
+        return onArrowPress(direction, cardIndex);
+      }
+      return true;
+    },
+    [onArrowPress],
+  );
+
+  const makeCardFocused = useCallback(
+    (cardIndex: number) => (el: HTMLDivElement) => {
+      handleCardFocused(el, cardIndex);
+    },
+    [handleCardFocused],
+  );
+
   if (!items.length) return null;
 
   const totalWidth = items.length * CARD_WIDTH + (items.length - 1) * CARD_GAP;
@@ -153,8 +177,9 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
                 <ContentCard
                   item={item}
                   showBadge={showBadge}
-                  onArrowPress={onArrowPress}
-                  onFocused={handleCardFocused}
+                  focusKeyOverride={getCardFocusKey(rowIndex, i)}
+                  onArrowPress={makeCardArrowPress(i)}
+                  onFocused={makeCardFocused(i)}
                 />
               </div>
             ))}

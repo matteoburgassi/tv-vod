@@ -8,7 +8,7 @@ import type { DrmConfig } from '@digitalvirgo/drm-player';
 import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm } from '../utils/assets';
+import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -144,7 +144,9 @@ export default function ContentDetailsPage() {
   if (loading) return <LoadingSpinner />;
   if (!content) return <div className="p-12 text-white/60">Content not found.</div>;
 
-  const bg = getArtBackground(content.assets);
+  const rawBg = getArtBackground(content.assets);
+  const heroBg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.6)) : null;
+  const playerPoster = rawBg ? sizedUrl(rawBg, window.innerWidth, window.innerHeight) : null;
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
   const hasPlayableContent = !!(mainUrl || trailerUrl);
@@ -155,7 +157,7 @@ export default function ContentDetailsPage() {
         {showPlayer && playerUrl && (
           <VideoPlayer
             url={playerUrl}
-            poster={bg ?? undefined}
+            poster={playerPoster ?? undefined}
             drm={drmConfig}
             onClose={() => setShowPlayer(false)}
           />
@@ -163,10 +165,10 @@ export default function ContentDetailsPage() {
 
         <div className="relative min-h-[60vh] w-full overflow-hidden">
           {trailerUrl ? (
-            <HeroTrailer src={trailerUrl} poster={bg} />
-          ) : bg ? (
+            <HeroTrailer src={trailerUrl} poster={heroBg} />
+          ) : heroBg ? (
             <img
-              src={bg}
+              src={heroBg}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
               decoding="async"

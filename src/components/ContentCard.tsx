@@ -2,7 +2,7 @@ import { memo, useCallback, useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
-import { getCoverImage } from '../utils/assets';
+import { getCoverImage, sizedUrl } from '../utils/assets';
 import { isImageCached, preloadImage } from '../utils/imageCache';
 
 interface ContentCardProps {
@@ -34,7 +34,9 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
     }
   }, [focused, onFocused]);
 
-  const cover = getCoverImage(item.assets);
+  const rawCover = getCoverImage(item.assets);
+  const vw = window.innerWidth / 100;
+  const cover = rawCover ? sizedUrl(rawCover, 9.375 * vw, 12.5 * vw) : null;
   const [loaded, setLoaded] = useState(() => (cover ? isImageCached(cover) : false));
 
   const shouldVirtualize = virtualized && !focused;

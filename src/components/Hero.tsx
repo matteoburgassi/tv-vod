@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
-import { getArtBackground, getHighlight, getHighlightTitle } from '../utils/assets';
+import { getArtBackground, getHighlight, getHighlightTitle, sizedUrl } from '../utils/assets';
 import { animateValue } from '../utils/smoothScroll';
 
 interface HeroProps {
@@ -58,8 +58,11 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const item = items[activeIndex];
   if (!item) return null;
 
-  const bg = getArtBackground(item.assets) || getHighlight(item.assets);
-  const titleImg = getHighlightTitle(item.assets);
+  const rawBg = getArtBackground(item.assets) || getHighlight(item.assets);
+  const bg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.7)) : null;
+  const rawTitleImg = getHighlightTitle(item.assets);
+  const rem = window.innerWidth / 120;
+  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(28 * rem), Math.round(6 * rem)) : null;
 
   return (
     <FocusContext.Provider value={focusKey}>

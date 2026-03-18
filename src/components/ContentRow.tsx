@@ -80,13 +80,14 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
       const viewportH = window.innerHeight;
       const scrollEl = document.getElementById('page-scroll-container');
       if (scrollEl) {
-        let targetTop: number | null = null;
+        let delta = 0;
         if (rect.top < 80) {
-          targetTop = scrollEl.scrollTop + rect.top - 80;
-        } else if (rect.bottom > viewportH - 40) {
-          targetTop = scrollEl.scrollTop + rect.bottom - viewportH + 40;
+          delta = rect.top - 80;
+        } else if (rect.bottom > viewportH) {
+          delta = rect.bottom - viewportH + 20;
         }
-        if (targetTop !== null) {
+        if (delta !== 0) {
+          const targetTop = scrollEl.scrollTop + delta;
           animateValue(
             vertAnimKeyRef.current,
             scrollEl.scrollTop,

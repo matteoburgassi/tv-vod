@@ -61,8 +61,8 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
   const rawBg = getArtBackground(item.assets) || getHighlight(item.assets);
   const bg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.7)) : null;
   const rawTitleImg = getHighlightTitle(item.assets);
-  const rem = window.innerWidth / 120;
-  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(28 * rem), Math.round(6 * rem)) : null;
+  const vw = window.innerWidth;
+  const titleImg = rawTitleImg ? sizedUrl(rawTitleImg, Math.round(vw * 0.35), Math.round(vw * 0.1)) : null;
 
   return (
     <FocusContext.Provider value={focusKey}>
@@ -92,7 +92,7 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
             <img
               src={titleImg}
               alt={item.title}
-              className="mb-4 h-auto max-h-24 w-auto max-w-md object-contain"
+              className="mb-4 h-auto max-h-[10vw] w-auto max-w-[35vw] object-contain object-left-bottom"
               decoding="async"
             />
           ) : (

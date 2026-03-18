@@ -18,6 +18,7 @@ interface CategoryRow {
 
 const ROW_HEIGHT = 360;
 const ROW_GAP = 16;
+const ROW_VIRTUALIZE_BUFFER = 2;
 
 export default function HomePage() {
   const [heroItems, setHeroItems] = useState<ContentItem[]>([]);
@@ -25,6 +26,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [expectedRowCount, setExpectedRowCount] = useState(0);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [focusedRowIndex, setFocusedRowIndex] = useState(0);
   const [, startTransition] = useTransition();
   const { ref, focusKey, focusSelf } = useFocusable({});
 
@@ -112,6 +114,7 @@ export default function HomePage() {
           setFocus('hero');
         } else {
           const targetRow = rowIndex - 1;
+          setFocusedRowIndex(targetRow);
           const targetCount = rows[targetRow]?.items.length ?? 0;
           const clampedIndex = Math.min(cardIndex, targetCount - 1);
           setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
@@ -121,6 +124,7 @@ export default function HomePage() {
       if (direction === 'down') {
         if (rowIndex < rows.length - 1) {
           const targetRow = rowIndex + 1;
+          setFocusedRowIndex(targetRow);
           const targetCount = rows[targetRow]?.items.length ?? 0;
           const clampedIndex = Math.min(cardIndex, targetCount - 1);
           setFocus(getCardFocusKey(targetRow, Math.max(0, clampedIndex)));
@@ -141,16 +145,28 @@ export default function HomePage() {
           <Hero items={heroItems.slice(0, 5)} firstRowFocusKey={rows.length > 0 ? getCardFocusKey(0, 0) : rowFocusKeys[0]} />
         )}
         <div className="relative z-10 -mt-6 pb-20">
-          {rows.map((row, i) => (
-            <ContentRow
-              key={row.rubric.rubric_id}
-              title={row.rubric.rubric_title}
-              items={row.items}
-              rowIndex={i}
-              focusKeyOverride={rowFocusKeys[i]}
-              onArrowPress={makeRowArrowPress(i)}
-            />
-          ))}
+          {rows.map((row, i) => {
+            const inRange = i >= Math.max(0, focusedRowIndex - ROW_VIRTUALIZE_BUFFER)
+              && i <= Math.min(rows.length - 1, focusedRowIndex + ROW_VIRTUALIZE_BUFFER);
+            if (!inRange) {
+              return (
+                <div
+                  key={row.rubric.rubric_id}
+                  style={{ height: ROW_HEIGHT, marginBottom: 16, contain: 'strict' }}
+                />
+              );
+            }
+            return (
+              <ContentRow
+                key={row.rubric.rubric_id}
+                title={row.rubric.rubric_title}
+                items={row.items}
+                rowIndex={i}
+                focusKeyOverride={rowFocusKeys[i]}
+                onArrowPress={makeRowArrowPress(i)}
+              />
+            );
+          })}
           {loading && expectedRowCount > rows.length && (
             <div
               style={{

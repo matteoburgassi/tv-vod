@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
 import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
+import { resolveBestHlsStream } from '../utils/hlsUtils';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -285,24 +286,38 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
     const video = videoRef.current;
     if (!video || !src) return;
 
+    let cancelled = false;
     const isHls = src.includes('.m3u8');
 
-    if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
-      import('hls.js').then(({ default: Hls }) => {
-        if (!Hls.isSupported()) return;
-        const hls = new Hls({ startLevel: -1 });
+    if (isHls) {
+      const setup = async () => {
+        const bestStream = await resolveBestHlsStream(src);
+        if (cancelled) return;
+
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = bestStream;
+          video.play().catch(() => {});
+          return;
+        }
+
+        const { default: Hls } = await import('hls.js');
+        if (cancelled || !Hls.isSupported()) return;
+
+        const hls = new Hls();
         hlsRef.current = hls;
-        hls.loadSource(src);
+        hls.loadSource(bestStream);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
         });
-      });
+      };
+      setup();
     } else {
       video.src = src;
     }
 
     return () => {
+      cancelled = true;
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
+import android.view.inputmethod.EditorInfo
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -61,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
             addJavascriptInterface(object {
                 @JavascriptInterface
-                fun showInputDialog(fieldId: String, label: String, currentValue: String, isPassword: Boolean) {
+                fun showInputDialog(fieldId: String, label: String, currentValue: String, isPassword: Boolean, nextFieldId: String) {
                     runOnUiThread {
                         val input = EditText(this@MainActivity).apply {
                             setText(currentValue)
@@ -69,26 +70,42 @@ class MainActivity : ComponentActivity() {
                                 InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                             else
                                 InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                            imeOptions = if (nextFieldId.isNotEmpty())
+                                EditorInfo.IME_ACTION_NEXT
+                            else
+                                EditorInfo.IME_ACTION_DONE
+                            isSingleLine = true
                             setSelectAllOnFocus(true)
                         }
 
-                        AlertDialog.Builder(this@MainActivity)
+                        var dialog: AlertDialog? = null
+
+                        fun commitValue() {
+                            val value = input.text.toString()
+                            val escaped = value.replace("\\", "\\\\").replace("'", "\\'")
+                            webView.evaluateJavascript(
+                                "document.dispatchEvent(new CustomEvent('native-input',{detail:{id:'$fieldId',value:'$escaped',next:'$nextFieldId'}}))",
+                                null
+                            )
+                        }
+
+                        input.setOnEditorActionListener { _, actionId, _ ->
+                            if (actionId == EditorInfo.IME_ACTION_NEXT || actionId == EditorInfo.IME_ACTION_DONE) {
+                                commitValue()
+                                dialog?.dismiss()
+                                true
+                            } else false
+                        }
+
+                        dialog = AlertDialog.Builder(this@MainActivity)
                             .setTitle(label)
                             .setView(input)
-                            .setPositiveButton("OK") { _, _ ->
-                                val value = input.text.toString()
-                                val escaped = value.replace("\\", "\\\\").replace("'", "\\'")
-                                webView.evaluateJavascript(
-                                    "document.dispatchEvent(new CustomEvent('native-input',{detail:{id:'$fieldId',value:'$escaped'}}))",
-                                    null
-                                )
-                            }
+                            .setPositiveButton("OK") { _, _ -> commitValue() }
                             .setNegativeButton("Cancel", null)
                             .show()
-                            .also { dialog ->
-                                input.requestFocus()
-                                dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
-                            }
+
+                        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+                        input.requestFocus()
                     }
                 }
             }, "AndroidBridge")

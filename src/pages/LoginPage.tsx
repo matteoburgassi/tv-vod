@@ -125,11 +125,35 @@ function FocusableInput({
       const detail = (e as CustomEvent).detail;
       if (detail?.id === focusKey) {
         onChange(detail.value);
+        if (detail.next && hasNativeBridge) {
+          setTimeout(() => setFocus(detail.next), 100);
+          setTimeout(() => {
+            document.dispatchEvent(new CustomEvent('native-open-field', { detail: { id: detail.next } }));
+          }, 200);
+        }
       }
     };
     document.addEventListener('native-input', handler);
     return () => document.removeEventListener('native-input', handler);
   }, [focusKey, onChange]);
+
+  useEffect(() => {
+    if (!hasNativeBridge) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.id === focusKey) {
+        (window as any).AndroidBridge.showInputDialog(
+          focusKey,
+          label,
+          value,
+          type === 'password',
+          nextFocus ?? '',
+        );
+      }
+    };
+    document.addEventListener('native-open-field', handler);
+    return () => document.removeEventListener('native-open-field', handler);
+  }, [focusKey, label, value, type, nextFocus]);
 
   const handleEnter = useCallback(() => {
     if (hasNativeBridge) {
@@ -138,11 +162,12 @@ function FocusableInput({
         label,
         value,
         type === 'password',
+        nextFocus ?? '',
       );
     } else {
       inputRef.current?.focus();
     }
-  }, [focusKey, label, value, type]);
+  }, [focusKey, label, value, type, nextFocus]);
 
   const { ref, focused } = useFocusable({
     focusKey,

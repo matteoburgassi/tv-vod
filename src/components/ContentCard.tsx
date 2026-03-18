@@ -40,17 +40,21 @@ export default memo(function ContentCard({ item, showBadge = false, onArrowPress
         (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
       className="group shrink-0 cursor-pointer"
-      style={{ width: 180, contain: 'layout style paint' }}
+      style={{
+        width: 180,
+        contain: 'layout style paint',
+        transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
+        transition: 'transform 200ms ease-out',
+        willChange: 'transform',
+      }}
       onClick={onPress}
     >
       <div
         className="relative overflow-hidden rounded-lg"
         style={{
           aspectRatio: '3/4',
-          transform: focused ? 'translate3d(0,0,0) scale(1.1)' : 'translate3d(0,0,0) scale(1)',
-          transition: 'transform 200ms ease-out, box-shadow 200ms ease-out',
-          willChange: 'transform',
           boxShadow: focused ? '0 0 0 3px white, 0 10px 15px -3px rgba(255,255,255,0.2)' : 'none',
+          transition: 'box-shadow 200ms ease-out',
         }}
       >
         {cover ? (

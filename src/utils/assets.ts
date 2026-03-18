@@ -3,8 +3,9 @@ import type { ContentAssets, AssetItem } from '../types/api';
 const COVER_RATIO_PRIORITY = ['portrait-3-4', 'portrait-2-3', 'portrait-9-16'];
 
 export function sizedUrl(url: string, w: number, h: number): string {
+  const dpr = window.devicePixelRatio || 1;
   const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}width=${Math.round(w)}&height=${Math.round(h)}`;
+  return `${url}${sep}width=${Math.round(w * dpr)}&height=${Math.round(h * dpr)}`;
 }
 
 export function getCoverImage(assets: ContentAssets): string | null {

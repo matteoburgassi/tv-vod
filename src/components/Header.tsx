@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
@@ -143,14 +144,15 @@ function SearchInput({
           {value || 'Search...'}
         </span>
       </div>
-      {showKeyboard && (
+      {showKeyboard && createPortal(
         <TVKeyboard
           value={draft}
           label="Search"
           onChanged={handleChanged}
           onSubmit={handleClose}
           onCancel={handleClose}
-        />
+        />,
+        document.body,
       )}
     </>
   );

@@ -1,17 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import LogoutDialog from './LogoutDialog';
-import TVKeyboard from './TVKeyboard';
 
 export default function Header() {
-  const [query, setQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { ref, focusKey } = useFocusable({
     focusKey: 'header',
     isFocusBoundary: false,
@@ -45,25 +40,6 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  useEffect(() => {
-    if (!location.pathname.startsWith('/search')) {
-      setQuery('');
-    }
-  }, [location.pathname]);
-
-  const handleChange = useCallback(
-    (value: string) => {
-      setQuery(value);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        if (value.trim()) {
-          navigate(`/search?q=${encodeURIComponent(value.trim())}`);
-        }
-      }, 400);
-    },
-    [navigate],
-  );
-
   return (
     <FocusContext.Provider value={focusKey}>
       <header
@@ -83,7 +59,7 @@ export default function Header() {
           className="h-8"
         />
         <div className="flex items-center gap-4">
-          <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
+          <SearchButton onArrowPress={handleArrowPress} />
           <UserButton onArrowPress={handleArrowPress} />
         </div>
       </header>
@@ -91,70 +67,30 @@ export default function Header() {
   );
 }
 
-function SearchInput({
-  value,
-  onChange,
-  onArrowPress,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onArrowPress: (direction: string) => boolean;
-}) {
-  const [showKeyboard, setShowKeyboard] = useState(false);
-  const [draft, setDraft] = useState(value);
-
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
+function SearchButton({ onArrowPress }: { onArrowPress: (direction: string) => boolean }) {
+  const navigate = useNavigate();
 
   const { ref, focused } = useFocusable({
-    onEnterPress: () => {
-      setDraft(value);
-      setShowKeyboard(true);
-    },
+    onEnterPress: () => navigate('/search'),
     onArrowPress,
   });
 
-  const handleChanged = useCallback((v: string) => {
-    setDraft(v);
-    onChange(v);
-  }, [onChange]);
-
-  const handleClose = useCallback(() => {
-    setShowKeyboard(false);
-    setFocus('header');
-  }, []);
-
   return (
-    <>
-      <div
-        ref={ref}
-        className="flex items-center gap-2 rounded-lg border px-3 py-2"
-        style={{
-          borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
-          backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
-          boxShadow: focused ? '0 0 0 2px rgba(233,30,140,0.5)' : 'none',
-          transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out',
-        }}
-      >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 fill-white/50">
-          <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-        </svg>
-        <span className="w-40 text-sm sm:w-56 truncate" style={{ color: value ? 'white' : 'rgba(255,255,255,0.3)' }}>
-          {value || 'Search...'}
-        </span>
-      </div>
-      {showKeyboard && createPortal(
-        <TVKeyboard
-          value={draft}
-          label="Search"
-          onChanged={handleChanged}
-          onSubmit={handleClose}
-          onCancel={handleClose}
-        />,
-        document.body,
-      )}
-    </>
+    <div
+      ref={ref}
+      className="flex items-center gap-2 rounded-lg border px-3 py-2"
+      style={{
+        borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
+        backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+        boxShadow: focused ? '0 0 0 2px rgba(233,30,140,0.5)' : 'none',
+        transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out',
+      }}
+    >
+      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 fill-white/50">
+        <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+      </svg>
+      <span className="text-sm text-white/30">Search...</span>
+    </div>
   );
 }
 

@@ -35,6 +35,7 @@ interface TVKeyboardProps {
   value: string;
   label?: string;
   masked?: boolean;
+  embedded?: boolean;
   onChanged: (value: string) => void;
   onSubmit: (value: string) => void;
   onNext?: (value: string) => void;
@@ -45,6 +46,7 @@ export default function TVKeyboard({
   value,
   label,
   masked = false,
+  embedded = false,
   onChanged,
   onSubmit,
   onNext,
@@ -131,56 +133,67 @@ export default function TVKeyboard({
 
   const displayValue = masked ? '•'.repeat(value.length) : value;
 
+  const keyboardContent = (
+    <div className="w-full max-w-[60vw] pb-[1.5vw]">
+      <div className="mb-[1vw] rounded-xl bg-white/10 px-[1.5vw] py-[0.8vw]">
+        {label && (
+          <div className="mb-[0.3vw] text-[0.9vw] font-medium text-white/50">
+            {label}
+          </div>
+        )}
+        <div className="flex items-center text-[1.4vw] text-white">
+          <span>{displayValue}</span>
+          <span className="ml-px inline-block h-[1.6vw] w-[0.15vw] animate-pulse bg-white" />
+        </div>
+      </div>
+
+      <div className="space-y-[0.5vw]">
+        {rows.map((row, ri) => (
+          <div key={ri} className="flex justify-center gap-[0.4vw]">
+            {row.map((ch, ci) => (
+              <KeyButton
+                key={`${layout}-${ri}-${ci}`}
+                focusKey={`tv-key-${ri}-${ci}`}
+                label={ch}
+                onPress={() => handleKey(ch)}
+              />
+            ))}
+          </div>
+        ))}
+
+        <div className="flex justify-center gap-[0.4vw] pt-[0.3vw]">
+          {actionRow.map((key, i) => (
+            <KeyButton
+              key={`action-${key}`}
+              focusKey={`tv-key-action-${i}`}
+              label={key === '→' ? 'Next' : key === '✓' ? 'Done' : key}
+              wide={key === '␣'}
+              accent={key === '→' ? 'blue' : key === '✓' ? 'green' : undefined}
+              onPress={() => handleKey(key)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <FocusContext.Provider value={focusKey}>
+        <div ref={containerRef} className="flex justify-center px-[2vw] pt-[1vw]">
+          {keyboardContent}
+        </div>
+      </FocusContext.Provider>
+    );
+  }
+
   return (
     <FocusContext.Provider value={focusKey}>
       <div
         ref={containerRef}
         className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm"
       >
-        <div className="w-full max-w-[60vw] pb-[3vw]">
-          {/* Input preview */}
-          <div className="mb-[1.5vw] rounded-xl bg-white/10 px-[1.5vw] py-[1vw]">
-            {label && (
-              <div className="mb-[0.3vw] text-[0.9vw] font-medium text-white/50">
-                {label}
-              </div>
-            )}
-            <div className="flex items-center text-[1.4vw] text-white">
-              <span>{displayValue}</span>
-              <span className="ml-px inline-block h-[1.6vw] w-[0.15vw] animate-pulse bg-white" />
-            </div>
-          </div>
-
-          {/* Character grid */}
-          <div className="space-y-[0.5vw]">
-            {rows.map((row, ri) => (
-              <div key={ri} className="flex justify-center gap-[0.4vw]">
-                {row.map((ch, ci) => (
-                  <KeyButton
-                    key={`${layout}-${ri}-${ci}`}
-                    focusKey={`tv-key-${ri}-${ci}`}
-                    label={ch}
-                    onPress={() => handleKey(ch)}
-                  />
-                ))}
-              </div>
-            ))}
-
-            {/* Action row */}
-            <div className="flex justify-center gap-[0.4vw] pt-[0.3vw]">
-              {actionRow.map((key, i) => (
-                <KeyButton
-                  key={`action-${key}`}
-                  focusKey={`tv-key-action-${i}`}
-                  label={key === '→' ? 'Next' : key === '✓' ? 'Done' : key}
-                  wide={key === '␣'}
-                  accent={key === '→' ? 'blue' : key === '✓' ? 'green' : undefined}
-                  onPress={() => handleKey(key)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        {keyboardContent}
       </div>
     </FocusContext.Provider>
   );

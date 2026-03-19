@@ -35,6 +35,7 @@ interface TVKeyboardProps {
   masked?: boolean;
   onChanged: (value: string) => void;
   onSubmit: (value: string) => void;
+  onNext?: (value: string) => void;
   onCancel: () => void;
 }
 
@@ -44,6 +45,7 @@ export default function TVKeyboard({
   masked = false,
   onChanged,
   onSubmit,
+  onNext,
   onCancel,
 }: TVKeyboardProps) {
   const [layout, setLayout] = useState<Layout>('lower');
@@ -100,6 +102,9 @@ export default function TVKeyboard({
         case 'abc':
           setLayout('lower');
           return;
+        case '→':
+          onNext?.(value);
+          return;
         case '✓':
           onSubmit(value);
           return;
@@ -114,10 +119,13 @@ export default function TVKeyboard({
   );
 
   const rows = LAYOUTS[layout];
-  const actionRow =
+  const baseActions =
     layout === 'symbols'
-      ? ['abc', '⌫', '␣', '✓']
-      : ['⇧', '#+=', '⌫', '␣', '✓'];
+      ? ['abc', '⌫', '␣']
+      : ['⇧', '#+=', '⌫', '␣'];
+  const actionRow = onNext
+    ? [...baseActions, '→', '✓']
+    : [...baseActions, '✓'];
 
   const displayValue = masked ? '•'.repeat(value.length) : value;
 
@@ -162,9 +170,9 @@ export default function TVKeyboard({
                 <KeyButton
                   key={`action-${key}`}
                   focusKey={`tv-key-action-${i}`}
-                  label={key}
+                  label={key === '→' ? 'Next' : key === '✓' ? 'Done' : key}
                   wide={key === '␣'}
-                  accent={key === '✓'}
+                  accent={key === '→' ? 'blue' : key === '✓' ? 'green' : undefined}
                   onPress={() => handleKey(key)}
                 />
               ))}
@@ -181,20 +189,31 @@ function KeyButton({
   label,
   onPress,
   wide = false,
-  accent = false,
+  accent,
 }: {
   focusKey: string;
   label: string;
   onPress: () => void;
   wide?: boolean;
-  accent?: boolean;
+  accent?: 'green' | 'blue';
 }) {
   const { ref, focused } = useFocusable({
     focusKey,
     onEnterPress: onPress,
   });
 
-  const widthClass = wide ? 'min-w-[12vw]' : 'min-w-[4vw]';
+  const widthClass = wide ? 'min-w-[12vw]' : label === 'Next' || label === 'Done' ? 'min-w-[6vw]' : 'min-w-[4vw]';
+
+  let colorClass: string;
+  if (focused) {
+    if (accent === 'blue') colorClass = 'bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30';
+    else if (accent === 'green') colorClass = 'bg-green-500 text-black scale-110 shadow-lg shadow-green-500/30';
+    else colorClass = 'bg-white text-black scale-110 shadow-lg';
+  } else {
+    if (accent === 'blue') colorClass = 'bg-blue-500/30 text-blue-300';
+    else if (accent === 'green') colorClass = 'bg-green-500/30 text-green-300';
+    else colorClass = 'bg-white/10 text-white/80';
+  }
 
   return (
     <div
@@ -204,13 +223,7 @@ function KeyButton({
       className={[
         'flex items-center justify-center rounded-lg px-[0.8vw] py-[0.7vw] text-[1.1vw] font-medium transition-all select-none',
         widthClass,
-        focused
-          ? accent
-            ? 'bg-green-500 text-black scale-110 shadow-lg shadow-green-500/30'
-            : 'bg-white text-black scale-110 shadow-lg'
-          : accent
-            ? 'bg-green-500/30 text-green-300'
-            : 'bg-white/10 text-white/80',
+        colorClass,
       ].join(' ')}
     >
       {label}

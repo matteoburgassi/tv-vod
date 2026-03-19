@@ -64,16 +64,21 @@ export default function LoginPage() {
     }, 100);
   }, [activeField]);
 
-  const handleKeyboardSubmit = useCallback(
+  const handleKeyboardDone = useCallback(
+    (value: string) => {
+      if (activeField === 'email') setEmail(value);
+      else if (activeField === 'password') setPassword(value);
+      closeKeyboard();
+    },
+    [activeField, closeKeyboard],
+  );
+
+  const handleKeyboardNext = useCallback(
     (value: string) => {
       if (activeField === 'email') {
         setEmail(value);
         setActiveField(null);
         setTimeout(() => setActiveField('password'), 150);
-      } else if (activeField === 'password') {
-        setPassword(value);
-        setActiveField(null);
-        setTimeout(() => setFocus('login-submit'), 100);
       }
     },
     [activeField],
@@ -156,7 +161,8 @@ export default function LoginPage() {
           label={activeField === 'email' ? 'Email' : 'Password'}
           masked={activeField === 'password'}
           onChanged={activeField === 'email' ? setEmail : setPassword}
-          onSubmit={handleKeyboardSubmit}
+          onSubmit={handleKeyboardDone}
+          onNext={activeField === 'email' ? handleKeyboardNext : undefined}
           onCancel={closeKeyboard}
         />
       )}

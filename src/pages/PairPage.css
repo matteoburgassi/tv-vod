@@ -1,0 +1,10 @@
+html.pair-page {
+  font-size: 16px;
+}
+
+html.pair-page body {
+  overflow: auto;
+  cursor: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
+}

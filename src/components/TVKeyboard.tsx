@@ -3,7 +3,9 @@ import {
   useFocusable,
   FocusContext,
   setFocus,
+  getCurrentFocusKey,
 } from '@noriginmedia/norigin-spatial-navigation';
+import { mapKeyEvent } from '../utils/keyMap';
 
 type Layout = 'lower' | 'upper' | 'symbols';
 
@@ -67,16 +69,16 @@ export default function TVKeyboard({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Backspace') {
-        if (e.key === 'Backspace') {
-          const el = document.activeElement;
-          if (el?.getAttribute('data-tvkey')) {
-            return;
-          }
-        }
+      const mapped = mapKeyEvent(e);
+      if (mapped === 'back') {
         e.preventDefault();
         e.stopPropagation();
         onCancel();
+        return;
+      }
+      const currentKey = getCurrentFocusKey();
+      if (!currentKey?.startsWith('tv-key')) {
+        setFocus('tv-key-0-0');
       }
     };
     window.addEventListener('keydown', handler, true);

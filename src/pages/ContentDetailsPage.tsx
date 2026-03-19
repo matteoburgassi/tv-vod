@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
 import { deliveryOrder, getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
@@ -87,6 +87,14 @@ export default function ContentDetailsPage() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [navigate, showPlayer]);
+
+  const handleArrowPress = useCallback((direction: string) => {
+    if (direction === 'up') {
+      setFocus('header');
+      return false;
+    }
+    return true;
+  }, []);
 
   const isDrm = content ? getMainDeliveryDrm(content.deliveries) : false;
 
@@ -193,9 +201,9 @@ export default function ContentDetailsPage() {
               )}
               <div className="mt-4 flex gap-3">
                 {hasPlayableContent && (
-                  <PlayButton onPress={handlePlay} loading={drmLoading} />
+                  <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
                 )}
-                <BackButton onPress={() => navigate(-1)} />
+                <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
               </div>
             </div>
           </div>
@@ -221,8 +229,8 @@ export default function ContentDetailsPage() {
   );
 }
 
-function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress });
+function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; loading?: boolean; onArrowPress?: (direction: string) => boolean }) {
+  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress, onArrowPress });
 
   return (
     <button
@@ -251,8 +259,8 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
   );
 }
 
-function BackButton({ onPress }: { onPress: () => void }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress?: (direction: string) => boolean }) {
+  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
 
   return (
     <button

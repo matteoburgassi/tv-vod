@@ -199,12 +199,12 @@ export default function ContentDetailsPage() {
               {drmError && (
                 <p className="mb-2 text-sm text-red-400">{drmError}</p>
               )}
-              <div className="mt-4 flex gap-3">
+              <DetailActions>
                 {hasPlayableContent && (
                   <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
                 )}
                 <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
-              </div>
+              </DetailActions>
             </div>
           </div>
         </div>
@@ -224,6 +224,22 @@ export default function ContentDetailsPage() {
             />
           ))}
         </div>
+      </div>
+    </FocusContext.Provider>
+  );
+}
+
+function DetailActions({ children }: { children: React.ReactNode }) {
+  const { ref, focusKey } = useFocusable({
+    focusKey: 'detail-actions',
+    isFocusBoundary: false,
+    trackChildren: true,
+  });
+
+  return (
+    <FocusContext.Provider value={focusKey}>
+      <div ref={ref} className="mt-4 flex gap-3">
+        {children}
       </div>
     </FocusContext.Provider>
   );

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import LogoutDialog from './LogoutDialog';
 
@@ -16,9 +16,17 @@ export default function Header() {
     trackChildren: true,
   });
 
-  const handleArrowPress = useCallback((_direction: string) => {
+  const handleArrowPress = useCallback((direction: string) => {
+    if (direction === 'down') {
+      if (location.pathname.startsWith('/content/')) {
+        setFocus('detail-actions');
+      } else {
+        setFocus('hero');
+      }
+      return false;
+    }
     return true;
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     let ticking = false;

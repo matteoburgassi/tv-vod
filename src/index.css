@@ -34,6 +34,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
   overflow: hidden;
+}
+
+body.tv-platform {
   cursor: none;
 }
 

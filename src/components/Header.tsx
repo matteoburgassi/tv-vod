@@ -69,16 +69,18 @@ export default function Header() {
 
 function SearchButton({ onArrowPress }: { onArrowPress: (direction: string) => boolean }) {
   const navigate = useNavigate();
+  const goToSearch = useCallback(() => navigate('/search'), [navigate]);
 
   const { ref, focused } = useFocusable({
-    onEnterPress: () => navigate('/search'),
+    onEnterPress: goToSearch,
     onArrowPress,
   });
 
   return (
     <div
       ref={ref}
-      className="flex items-center gap-2 rounded-lg border px-3 py-2"
+      onClick={goToSearch}
+      className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2"
       style={{
         borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
         backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',

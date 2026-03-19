@@ -1,7 +1,9 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
+import Toast from './components/Toast';
 import HomePage from './pages/HomePage';
 import ContentDetailsPage from './pages/ContentDetailsPage';
 import SearchPage from './pages/SearchPage';
@@ -23,6 +25,13 @@ document.addEventListener('keydown', (e) => {
 }, true);
 
 function AppLayout() {
+  const location = useLocation();
+  const [showLoginToast, setShowLoginToast] = useState(
+    () => !!(location.state as { loginSuccess?: boolean })?.loginSuccess,
+  );
+
+  const dismissToast = useCallback(() => setShowLoginToast(false), []);
+
   const { ref, focusKey } = useFocusable({
     isFocusBoundary: false,
     trackChildren: true,
@@ -59,6 +68,7 @@ function AppLayout() {
             }
           />
         </Routes>
+        {showLoginToast && <Toast message="Signed in successfully" onDone={dismissToast} />}
       </div>
     </FocusContext.Provider>
   );

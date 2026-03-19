@@ -28,7 +28,6 @@ const LAYOUTS: Record<Layout, string[][]> = {
   ],
 };
 
-const ACTION_KEYS = ['⇧', '⌫', '␣', '#+=', 'abc', '✓'] as const;
 
 interface TVKeyboardProps {
   value: string;

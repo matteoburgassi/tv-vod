@@ -40,7 +40,7 @@ export default function LoginPage() {
     try {
       const user = await loginWithEmail(email, password);
       login(user);
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: { loginSuccess: true } });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

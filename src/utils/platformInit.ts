@@ -10,6 +10,10 @@ export function platformInit() {
     ];
     keys.forEach((key) => window.tizen!.tvinputdevice.registerKey(key));
   }
+
+  if (isTV()) {
+    document.body.classList.add('tv-platform');
+  }
 }
 
 export function isTV(): boolean {

@@ -87,7 +87,7 @@ function ResultsPreview({
   loading: boolean;
 }) {
   return (
-    <div className="flex-1 overflow-hidden px-[3vw] pt-[2vw]">
+    <div className="flex-1 overflow-hidden px-[3vw] pt-[5vw]">
       <h2 className="mb-[1vw] text-[1.3vw] font-semibold text-white">
         {query ? `Results for "${query}"` : 'Start typing to search'}
       </h2>

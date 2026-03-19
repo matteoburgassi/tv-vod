@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import LogoutDialog from './LogoutDialog';
 
@@ -16,11 +16,7 @@ export default function Header() {
     trackChildren: true,
   });
 
-  const handleArrowPress = useCallback((direction: string) => {
-    if (direction === 'down') {
-      setFocus('hero');
-      return false;
-    }
+  const handleArrowPress = useCallback((_direction: string) => {
     return true;
   }, []);
 
@@ -71,35 +67,17 @@ export default function Header() {
           transform: 'translate3d(0,0,0)',
         }}
       >
-        <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />
+        <img
+          src="/playvod-logo-landscape-light.1920-10.svg"
+          alt="PlayVOD"
+          className="h-8"
+        />
         <div className="flex items-center gap-4">
           <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
           <UserButton onArrowPress={handleArrowPress} />
         </div>
       </header>
     </FocusContext.Provider>
-  );
-}
-
-function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
-
-  return (
-    <button
-      ref={ref}
-      onClick={onPress}
-      style={{
-        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
-        transition: 'transform 200ms ease-out, filter 200ms ease-out',
-        filter: focused ? 'drop-shadow(0 0 8px rgba(233,30,140,0.5))' : 'none',
-      }}
-    >
-      <img
-        src="/playvod-logo-landscape-light.1920-10.svg"
-        alt="PlayVOD"
-        className="h-8"
-      />
-    </button>
   );
 }
 

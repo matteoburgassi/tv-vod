@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { AuthProvider } from './contexts/AuthContext';
@@ -26,9 +26,14 @@ document.addEventListener('keydown', (e) => {
 
 function AppLayout() {
   const location = useLocation();
-  const [showLoginToast, setShowLoginToast] = useState(
-    () => !!(location.state as { loginSuccess?: boolean })?.loginSuccess,
-  );
+  const [showLoginToast, setShowLoginToast] = useState(false);
+
+  useEffect(() => {
+    if ((location.state as { loginSuccess?: boolean })?.loginSuccess) {
+      setShowLoginToast(true);
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const dismissToast = useCallback(() => setShowLoginToast(false), []);
 

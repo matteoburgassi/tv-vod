@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { loginWithEmail } from '@digitalvirgo/drm-player';
 
@@ -155,7 +155,36 @@ export default function PairPage() {
   );
 }
 
+function useMobileOverrides() {
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    const prevFontSize = html.style.fontSize;
+    const prevOverflow = body.style.overflow;
+    const prevCursor = body.style.cursor;
+    const prevUserSelect = body.style.userSelect;
+    const prevWebkitUserSelect = body.style.webkitUserSelect;
+
+    html.style.fontSize = '16px';
+    body.style.overflow = 'auto';
+    body.style.cursor = 'auto';
+    body.style.userSelect = 'auto';
+    body.style.webkitUserSelect = 'auto';
+
+    return () => {
+      html.style.fontSize = prevFontSize;
+      body.style.overflow = prevOverflow;
+      body.style.cursor = prevCursor;
+      body.style.userSelect = prevUserSelect;
+      body.style.webkitUserSelect = prevWebkitUserSelect;
+    };
+  }, []);
+}
+
 function PageShell({ children }: { children: React.ReactNode }) {
+  useMobileOverrides();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#120818] p-6">
       <div className="w-full max-w-md">{children}</div>

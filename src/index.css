@@ -16,6 +16,7 @@
 }
 
 html {
+  font-size: calc(100vw / 120);
   background-color: #120818;
   color: white;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -24,27 +25,16 @@ html {
   text-rendering: optimizeSpeed;
 }
 
-@media (min-width: 960px) {
-  html {
-    font-size: calc(100vw / 120);
-  }
-}
-
 body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  -webkit-user-select: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
-}
-
-@media (min-width: 960px) {
-  body {
-    -webkit-user-select: none;
-    user-select: none;
-    overflow: hidden;
-    cursor: none;
-  }
+  overflow: hidden;
+  cursor: none;
 }
 
 img {

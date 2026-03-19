@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { User } from '@digitalvirgo/drm-player';
+import type { User } from 'tv-vod-auth';
 
 interface AuthState {
   user: User | null;

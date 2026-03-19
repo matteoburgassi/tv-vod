@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { loginWithEmail } from '@digitalvirgo/drm-player';
+import { loginWithEmail, verifyDeviceCode } from 'tv-vod-auth';
 import './PairPage.css';
-
-const WORKER_BASE = 'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
 
 type Step = 'code' | 'login' | 'verifying' | 'done' | 'error';
 
@@ -37,18 +35,7 @@ export default function PairPage() {
 
     try {
       const user = await loginWithEmail(email, password);
-
-      const res = await fetch(`${WORKER_BASE}/device/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.toUpperCase(), user }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error((data as any)?.error || 'Code expired or invalid');
-      }
-
+      await verifyDeviceCode(code.toUpperCase(), user as unknown as Record<string, unknown>);
       setStep('done');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');

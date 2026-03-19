@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
 import { usePlayer, PLAYER_CONTAINER_CLASS } from '@digitalvirgo/drm-player';
-import type { DrmConfig } from '@digitalvirgo/drm-player';
+import type { DrmConfig } from 'tv-vod-auth';
 
 interface VideoPlayerProps {
   url: string;

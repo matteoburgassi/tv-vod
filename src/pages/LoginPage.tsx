@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { loginWithEmail } from '@digitalvirgo/drm-player';
+import { loginWithEmail, requestDeviceCode, pollDeviceCode, PAIR_URL_BASE, POLL_INTERVAL } from 'tv-vod-auth';
 import TVKeyboard from '../components/TVKeyboard';
 import QRCode from '../components/QRCode';
 import { isTV } from '../utils/platformInit';
@@ -11,10 +11,6 @@ type ActiveField = 'email' | 'password' | null;
 type TVLoginMode = 'qr' | 'keyboard';
 
 const tv = isTV();
-
-const WORKER_BASE = 'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
-const PAIR_URL_BASE = 'https://tv-vod.blast.dvbuilder.com/#/pair';
-const POLL_INTERVAL = 3000;
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -52,8 +48,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`${WORKER_BASE}/device/code`, { method: 'POST' });
-      const data = await res.json() as { code: string; expiresIn: number };
+      const data = await requestDeviceCode();
       setDeviceCode(data.code);
 
       expiryRef.current = setTimeout(() => {
@@ -63,11 +58,10 @@ export default function LoginPage() {
 
       pollRef.current = setInterval(async () => {
         try {
-          const pollRes = await fetch(`${WORKER_BASE}/device/poll?code=${data.code}`);
-          const pollData = await pollRes.json() as { status: string; user?: any };
+          const pollData = await pollDeviceCode(data.code);
           if (pollData.status === 'complete' && pollData.user) {
             stopPolling();
-            login(pollData.user);
+            login(pollData.user as any);
             navigate(returnTo, { replace: true, state: { loginSuccess: true } });
           } else if (pollData.status === 'expired') {
             stopPolling();

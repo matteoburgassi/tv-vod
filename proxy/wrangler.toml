@@ -1,3 +1,7 @@
 name = "smartvideo-cors-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "DEVICE_CODES"
+id = "db9ef393cce44f7cac72b7299ee94b87"

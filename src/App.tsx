@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import ContentDetailsPage from './pages/ContentDetailsPage';
 import SearchPage from './pages/SearchPage';
 import LoginPage from './pages/LoginPage';
+import PairPage from './pages/PairPage';
 
 init({
   debug: false,
@@ -57,6 +58,7 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/pair" element={<PairPage />} />
           <Route
             path="*"
             element={

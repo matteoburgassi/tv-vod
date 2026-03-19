@@ -2,8 +2,7 @@ import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { loginWithEmail } from '@digitalvirgo/drm-player';
 
-const WORKER_BASE = import.meta.env.VITE_SMART_VIDEO_HOST?.replace('/smartvideo', '') ||
-  'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
+const WORKER_BASE = 'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
 
 type Step = 'code' | 'login' | 'verifying' | 'done' | 'error';
 

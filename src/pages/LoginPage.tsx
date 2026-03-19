@@ -12,8 +12,7 @@ type TVLoginMode = 'qr' | 'keyboard';
 
 const tv = isTV();
 
-const WORKER_BASE = import.meta.env.VITE_SMART_VIDEO_HOST?.replace('/smartvideo', '') ||
-  'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
+const WORKER_BASE = 'https://smartvideo-cors-proxy.matteoburgassi.workers.dev';
 const PAIR_URL_BASE = 'https://tv-vod.blast.dvbuilder.com/#/pair';
 const POLL_INTERVAL = 3000;
 
@@ -76,8 +75,9 @@ export default function LoginPage() {
           }
         } catch { /* ignore poll errors */ }
       }, POLL_INTERVAL);
-    } catch {
-      setError('Could not generate pairing code. Try again.');
+    } catch (err: any) {
+      console.error('Device code request failed:', err);
+      setError(err?.message || 'Could not generate pairing code. Try again.');
     }
   }, [stopPolling, login, navigate, returnTo]);
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
 import { fetchContentDetail, fetchRubricList, fetchContentsByCategory } from '../services/api';
 import { deliveryOrder, getSmartVideoDrmConfig } from '@digitalvirgo/drm-player';
@@ -87,6 +87,14 @@ export default function ContentDetailsPage() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [navigate, showPlayer]);
+
+  const handleArrowPress = useCallback((direction: string) => {
+    if (direction === 'up') {
+      setFocus('header');
+      return false;
+    }
+    return true;
+  }, []);
 
   const isDrm = content ? getMainDeliveryDrm(content.deliveries) : false;
 
@@ -191,12 +199,12 @@ export default function ContentDetailsPage() {
               {drmError && (
                 <p className="mb-2 text-sm text-red-400">{drmError}</p>
               )}
-              <div className="mt-4 flex gap-3">
+              <DetailActions>
                 {hasPlayableContent && (
-                  <PlayButton onPress={handlePlay} loading={drmLoading} />
+                  <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
                 )}
-                <BackButton onPress={() => navigate(-1)} />
-              </div>
+                <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
+              </DetailActions>
             </div>
           </div>
         </div>
@@ -221,8 +229,24 @@ export default function ContentDetailsPage() {
   );
 }
 
-function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress });
+function DetailActions({ children }: { children: React.ReactNode }) {
+  const { ref, focusKey } = useFocusable({
+    focusKey: 'detail-actions',
+    isFocusBoundary: false,
+    trackChildren: true,
+  });
+
+  return (
+    <FocusContext.Provider value={focusKey}>
+      <div ref={ref} className="mt-4 flex gap-3">
+        {children}
+      </div>
+    </FocusContext.Provider>
+  );
+}
+
+function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; loading?: boolean; onArrowPress?: (direction: string) => boolean }) {
+  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress, onArrowPress });
 
   return (
     <button
@@ -251,8 +275,8 @@ function PlayButton({ onPress, loading }: { onPress: () => void; loading?: boole
   );
 }
 
-function BackButton({ onPress }: { onPress: () => void }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress });
+function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress?: (direction: string) => boolean }) {
+  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
 
   return (
     <button

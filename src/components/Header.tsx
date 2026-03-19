@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
+import LogoutDialog from './LogoutDialog';
 
 export default function Header() {
   const [query, setQuery] = useState('');
@@ -17,11 +18,15 @@ export default function Header() {
 
   const handleArrowPress = useCallback((direction: string) => {
     if (direction === 'down') {
-      setFocus('hero');
+      if (location.pathname.startsWith('/content/')) {
+        setFocus('detail-actions');
+      } else {
+        setFocus('hero');
+      }
       return false;
     }
     return true;
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     let ticking = false;
@@ -70,35 +75,17 @@ export default function Header() {
           transform: 'translate3d(0,0,0)',
         }}
       >
-        <LogoButton onPress={() => navigate('/')} onArrowPress={handleArrowPress} />
+        <img
+          src="/playvod-logo-landscape-light.1920-10.svg"
+          alt="PlayVOD"
+          className="h-8"
+        />
         <div className="flex items-center gap-4">
           <SearchInput value={query} onChange={handleChange} onArrowPress={handleArrowPress} />
           <UserButton onArrowPress={handleArrowPress} />
         </div>
       </header>
     </FocusContext.Provider>
-  );
-}
-
-function LogoButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
-
-  return (
-    <button
-      ref={ref}
-      onClick={onPress}
-      style={{
-        transform: focused ? 'translate3d(0,0,0) scale(1.05)' : 'translate3d(0,0,0) scale(1)',
-        transition: 'transform 200ms ease-out, filter 200ms ease-out',
-        filter: focused ? 'drop-shadow(0 0 8px rgba(233,30,140,0.5))' : 'none',
-      }}
-    >
-      <img
-        src="/playvod-logo-landscape-light.1920-10.svg"
-        alt="PlayVOD"
-        className="h-8"
-      />
-    </button>
   );
 }
 
@@ -147,14 +134,20 @@ function SearchInput({
 function UserButton({ onArrowPress }: { onArrowPress: (direction: string) => boolean }) {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handlePress = useCallback(() => {
     if (isAuthenticated) {
-      logout();
+      setShowLogoutDialog(true);
     } else {
       navigate('/login');
     }
-  }, [isAuthenticated, logout, navigate]);
+  }, [isAuthenticated, navigate]);
+
+  const handleConfirmLogout = useCallback(() => {
+    setShowLogoutDialog(false);
+    logout();
+  }, [logout]);
 
   const { ref, focused } = useFocusable({
     onEnterPress: handlePress,
@@ -185,21 +178,29 @@ function UserButton({ onArrowPress }: { onArrowPress: (direction: string) => boo
   const displayName = user?.firstname || user?.email?.split('@')[0] || 'Guest';
 
   return (
-    <button
-      ref={ref}
-      onClick={handlePress}
-      className="flex items-center gap-2 rounded-lg border px-3 py-2"
-      style={{
-        borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
-        backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
-        boxShadow: focused ? '0 0 0 2px rgba(233,30,140,0.5)' : 'none',
-        transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out',
-      }}
-    >
-      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-fuchsia-500/20 text-xs font-bold text-fuchsia-500">
-        {displayName.charAt(0).toUpperCase()}
-      </div>
-      <span className="text-sm text-white/80">{displayName}</span>
-    </button>
+    <>
+      <button
+        ref={ref}
+        onClick={handlePress}
+        className="flex items-center gap-2 rounded-lg border px-3 py-2"
+        style={{
+          borderColor: focused ? '#e91e8c' : 'rgba(255,255,255,0.15)',
+          backgroundColor: focused ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+          boxShadow: focused ? '0 0 0 2px rgba(233,30,140,0.5)' : 'none',
+          transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out',
+        }}
+      >
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-fuchsia-500/20 text-xs font-bold text-fuchsia-500">
+          {displayName.charAt(0).toUpperCase()}
+        </div>
+        <span className="text-sm text-white/80">{displayName}</span>
+      </button>
+      {showLogoutDialog && (
+        <LogoutDialog
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setShowLogoutDialog(false)}
+        />
+      )}
+    </>
   );
 }

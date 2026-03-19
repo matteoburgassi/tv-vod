@@ -1,11 +1,14 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { loginWithEmail } from '@digitalvirgo/drm-player';
 import TVKeyboard from '../components/TVKeyboard';
+import { isTV } from '../utils/platformInit';
 
 type ActiveField = 'email' | 'password' | null;
+
+const tv = isTV();
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -40,7 +43,7 @@ export default function LoginPage() {
     try {
       const user = await loginWithEmail(email, password);
       login(user);
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: { loginSuccess: true } });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -61,16 +64,21 @@ export default function LoginPage() {
     }, 100);
   }, [activeField]);
 
-  const handleKeyboardSubmit = useCallback(
+  const handleKeyboardDone = useCallback(
+    (value: string) => {
+      if (activeField === 'email') setEmail(value);
+      else if (activeField === 'password') setPassword(value);
+      closeKeyboard();
+    },
+    [activeField, closeKeyboard],
+  );
+
+  const handleKeyboardNext = useCallback(
     (value: string) => {
       if (activeField === 'email') {
         setEmail(value);
         setActiveField(null);
         setTimeout(() => setActiveField('password'), 150);
-      } else if (activeField === 'password') {
-        setPassword(value);
-        setActiveField(null);
-        setTimeout(() => setFocus('login-submit'), 100);
       }
     },
     [activeField],
@@ -87,27 +95,52 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-6">
-              <FocusableInput
-                focusKey="login-email"
-                label="Email"
-                type="email"
-                value={email}
-                placeholder="your@email.com"
-                prevFocus={undefined}
-                nextFocus="login-password"
-                onRequestKeyboard={() => openKeyboard('email')}
-              />
+              {tv ? (
+                <TVFocusableInput
+                  focusKey="login-email"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  placeholder="your@email.com"
+                  prevFocus={undefined}
+                  nextFocus="login-password"
+                  onRequestKeyboard={() => openKeyboard('email')}
+                />
+              ) : (
+                <NativeInput
+                  focusKey="login-email"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  placeholder="your@email.com"
+                  nextFocus="login-password"
+                  onChange={setEmail}
+                />
+              )}
 
-              <FocusableInput
-                focusKey="login-password"
-                label="Password"
-                type="password"
-                value={password}
-                placeholder="••••••••"
-                prevFocus="login-email"
-                nextFocus="login-submit"
-                onRequestKeyboard={() => openKeyboard('password')}
-              />
+              {tv ? (
+                <TVFocusableInput
+                  focusKey="login-password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  placeholder="••••••••"
+                  prevFocus="login-email"
+                  nextFocus="login-submit"
+                  onRequestKeyboard={() => openKeyboard('password')}
+                />
+              ) : (
+                <NativeInput
+                  focusKey="login-password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  placeholder="••••••••"
+                  prevFocus="login-email"
+                  nextFocus="login-submit"
+                  onChange={setPassword}
+                />
+              )}
 
               {error && (
                 <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
@@ -115,24 +148,21 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <LoginButton
-                loading={loading}
-                onPress={handleLogin}
-              />
-
+              <LoginButton loading={loading} onPress={handleLogin} />
               <SkipButton returnTo={returnTo} />
             </div>
           </div>
         </div>
       </FocusContext.Provider>
 
-      {activeField && (
+      {tv && activeField && (
         <TVKeyboard
           value={activeField === 'email' ? email : password}
           label={activeField === 'email' ? 'Email' : 'Password'}
           masked={activeField === 'password'}
           onChanged={activeField === 'email' ? setEmail : setPassword}
-          onSubmit={handleKeyboardSubmit}
+          onSubmit={handleKeyboardDone}
+          onNext={activeField === 'email' ? handleKeyboardNext : undefined}
           onCancel={closeKeyboard}
         />
       )}
@@ -140,7 +170,7 @@ export default function LoginPage() {
   );
 }
 
-function FocusableInput({
+function TVFocusableInput({
   focusKey,
   label,
   type,
@@ -163,7 +193,6 @@ function FocusableInput({
     focusKey,
     onEnterPress: () => onRequestKeyboard?.(),
     onArrowPress: (direction: string) => {
-      console.log("onArrowPress")
       if (direction === 'down' && nextFocus) {
         setFocus(nextFocus);
         return false;
@@ -195,6 +224,73 @@ function FocusableInput({
             <span className="ml-0.5 inline-block h-6 w-0.5 animate-pulse bg-white" />
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function NativeInput({
+  focusKey,
+  label,
+  type,
+  value,
+  placeholder,
+  prevFocus,
+  nextFocus,
+  onChange,
+}: {
+  focusKey: string;
+  label: string;
+  type: string;
+  value: string;
+  placeholder: string;
+  prevFocus?: string;
+  nextFocus?: string;
+  onChange: (v: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: () => inputRef.current?.focus(),
+    onArrowPress: (direction: string) => {
+      if (direction === 'down' && nextFocus) {
+        setFocus(nextFocus);
+        return false;
+      }
+      if (direction === 'up' && prevFocus) {
+        setFocus(prevFocus);
+        return false;
+      }
+      return true;
+    },
+  });
+
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-white/70">{label}</label>
+      <div
+        ref={ref}
+        className={`rounded-xl border-2 transition-all ${
+          focused
+            ? 'border-white/60 bg-white/10 shadow-lg shadow-white/5'
+            : 'border-white/10 bg-white/5'
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              inputRef.current?.blur();
+              if (nextFocus) setFocus(nextFocus);
+            }
+          }}
+          className="w-full bg-transparent px-5 py-4 text-lg text-white placeholder-white/30 outline-none"
+        />
       </div>
     </div>
   );

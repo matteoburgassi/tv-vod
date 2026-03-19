@@ -11,3 +11,11 @@ export function platformInit() {
     keys.forEach((key) => window.tizen!.tvinputdevice.registerKey(key));
   }
 }
+
+export function isTV(): boolean {
+  if ((window as any).__TV_PLATFORM__) return true;
+  if (window.tizen) return true;
+  if (window.webOS) return true;
+  if (/Android/.test(navigator.userAgent) && /TV|AFT|BRAVIA|MIBOX|Chromecast/.test(navigator.userAgent)) return true;
+  return false;
+}

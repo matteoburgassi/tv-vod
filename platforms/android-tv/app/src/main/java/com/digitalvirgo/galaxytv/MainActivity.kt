@@ -60,6 +60,10 @@ class MainActivity : ComponentActivity() {
                     view: WebView?,
                     request: WebResourceRequest?
                 ): Boolean = false
+
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    view?.evaluateJavascript("window.__TV_PLATFORM__='androidtv';", null)
+                }
             }
 
             webChromeClient = object : WebChromeClient() {

@@ -462,43 +462,45 @@ function HeroTrailer({ src }: { src: string }) {
       }
     }, 14000);
 
+    const tryPlay = () => { video.play().catch(() => {}); };
+
     if (isHls) {
       const setup = async () => {
-        const bestStream = await resolveBestHlsStream(src);
-        if (cancelled) return;
-
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = bestStream;
-          video.play().catch(() => {});
+        if (video.canPlayType('application/vnd.apple.mpegurl') ||
+            video.canPlayType('application/x-mpegURL')) {
+          video.src = src;
+          tryPlay();
           return;
         }
 
-        const { default: Hls } = await import('hls.js');
+        let bestStream = src;
+        try { bestStream = await resolveBestHlsStream(src); } catch { /* use master */ }
         if (cancelled) return;
 
-        if (Hls.isSupported()) {
-          const hlsConfig: Partial<import('hls.js').HlsConfig> = isTV()
-            ? {
-                maxBufferLength: 12,
-                maxMaxBufferLength: 24,
-                startFragPrefetch: true,
-              }
-            : {};
-          const hls = new Hls(hlsConfig);
-          hlsRef.current = hls;
-          hls.loadSource(bestStream);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
-          });
-        } else {
-          video.src = bestStream;
-          video.play().catch(() => {});
-        }
+        try {
+          const { default: Hls } = await import('hls.js');
+          if (cancelled) return;
+
+          if (Hls.isSupported()) {
+            const hlsConfig: Partial<import('hls.js').HlsConfig> = isTV()
+              ? { maxBufferLength: 12, maxMaxBufferLength: 24, startFragPrefetch: true }
+              : {};
+            const hls = new Hls(hlsConfig);
+            hlsRef.current = hls;
+            hls.loadSource(bestStream);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+            return;
+          }
+        } catch { /* hls.js unavailable */ }
+
+        video.src = bestStream;
+        tryPlay();
       };
-      setup();
+      void setup();
     } else {
       video.src = src;
+      tryPlay();
     }
 
     return () => {
@@ -514,6 +516,7 @@ function HeroTrailer({ src }: { src: string }) {
       }
       hlsRef.current?.destroy();
       hlsRef.current = null;
+      try { video.pause(); video.removeAttribute('src'); video.load(); } catch { /* */ }
     };
   }, [src, scheduleTrailerReveal]);
 

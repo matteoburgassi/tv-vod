@@ -20,6 +20,8 @@ interface RelatedRow {
 }
 
 const HEADER_SPACER_EXTRA_PX = 28;
+/** Extra air below the fixed top bar on detail (trailer stays full-bleed). */
+const DETAIL_TOP_GAP_MULTIPLIER = 2;
 
 function measureHeaderSafePx(): number {
   const el = document.querySelector('header');
@@ -31,7 +33,7 @@ export default function ContentDetailsPage() {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [headerSpacerPx, setHeaderSpacerPx] = useState(160);
+  const [headerSpacerPx, setHeaderSpacerPx] = useState(160 * DETAIL_TOP_GAP_MULTIPLIER);
   const [content, setContent] = useState<ContentItem | null>(null);
   const [related, setRelated] = useState<RelatedRow[]>([]);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -82,7 +84,7 @@ export default function ContentDetailsPage() {
   }, [contentId]);
 
   useLayoutEffect(() => {
-    const sync = () => setHeaderSpacerPx(measureHeaderSafePx());
+    const sync = () => setHeaderSpacerPx(measureHeaderSafePx() * DETAIL_TOP_GAP_MULTIPLIER);
     sync();
     window.addEventListener('resize', sync);
     const t = window.setTimeout(sync, 0);
@@ -97,7 +99,7 @@ export default function ContentDetailsPage() {
   useEffect(() => {
     if (!loading) {
       window.requestAnimationFrame(() => {
-        setHeaderSpacerPx(measureHeaderSafePx());
+        setHeaderSpacerPx(measureHeaderSafePx() * DETAIL_TOP_GAP_MULTIPLIER);
         setFocus('detail-actions');
       });
     }
@@ -219,7 +221,7 @@ export default function ContentDetailsPage() {
           <div className="relative z-10 w-full px-12 pb-16">
             <div
               className="w-full shrink-0"
-              style={{ minHeight: `${headerSpacerPx}px` }}
+              style={{ minHeight: headerSpacerPx }}
               aria-hidden
             />
             <div className="flex w-full flex-row items-stretch gap-8">

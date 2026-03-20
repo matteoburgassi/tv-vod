@@ -1,11 +1,23 @@
 import type { ContentAssets, AssetItem } from '../types/api';
+import { isTV } from './platformInit';
 
 const COVER_RATIO_PRIORITY = ['portrait-3-4', 'portrait-2-3', 'portrait-9-16'];
 
+const TV_MAX_IMAGE_WIDTH = 1280;
+
 export function sizedUrl(url: string, w: number, h?: number): string {
   const dpr = window.devicePixelRatio || 1;
+  let pw = Math.round(w * dpr);
+  let ph = h != null ? Math.round(h * dpr) : undefined;
+
+  if (isTV() && pw > TV_MAX_IMAGE_WIDTH) {
+    const scale = TV_MAX_IMAGE_WIDTH / pw;
+    pw = TV_MAX_IMAGE_WIDTH;
+    if (ph != null) ph = Math.round(ph * scale);
+  }
+
   const sep = url.includes('?') ? '&' : '?';
-  const params = `width=${Math.round(w * dpr)}` + (h != null ? `&height=${Math.round(h * dpr)}` : '') + '&fit=inside';
+  const params = `width=${pw}` + (ph != null ? `&height=${ph}` : '') + '&fit=inside';
   return `${url}${sep}${params}`;
 }
 

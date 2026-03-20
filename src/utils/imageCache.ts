@@ -1,7 +1,12 @@
+import { isTV } from './platformInit';
+
 const MAX_CACHE_SIZE = 50;
+const MAX_CONCURRENT = isTV() ? 2 : 6;
 
 const cache = new Map<string, HTMLImageElement>();
 const pending = new Map<string, Promise<HTMLImageElement>>();
+const queue: Array<{ url: string; resolve: (img: HTMLImageElement) => void; reject: (err: Error) => void }> = [];
+let activeLoads = 0;
 
 function evictOldest(): void {
   if (cache.size <= MAX_CACHE_SIZE) return;
@@ -23,6 +28,38 @@ function touchEntry(url: string): void {
   }
 }
 
+function drainQueue(): void {
+  while (activeLoads < MAX_CONCURRENT && queue.length > 0) {
+    const next = queue.shift()!;
+    startLoad(next.url, next.resolve, next.reject);
+  }
+}
+
+function startLoad(
+  url: string,
+  resolve: (img: HTMLImageElement) => void,
+  reject: (err: Error) => void,
+): void {
+  activeLoads++;
+  const img = new Image();
+  img.decoding = 'async';
+  img.onload = () => {
+    cache.set(url, img);
+    pending.delete(url);
+    activeLoads--;
+    evictOldest();
+    resolve(img);
+    drainQueue();
+  };
+  img.onerror = () => {
+    pending.delete(url);
+    activeLoads--;
+    reject(new Error(`Failed to load: ${url}`));
+    drainQueue();
+  };
+  img.src = url;
+}
+
 export function preloadImage(url: string): Promise<HTMLImageElement> {
   if (cache.has(url)) {
     touchEntry(url);
@@ -33,19 +70,11 @@ export function preloadImage(url: string): Promise<HTMLImageElement> {
   if (existing) return existing;
 
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => {
-      cache.set(url, img);
-      pending.delete(url);
-      evictOldest();
-      resolve(img);
-    };
-    img.onerror = () => {
-      pending.delete(url);
-      reject(new Error(`Failed to load: ${url}`));
-    };
-    img.src = url;
+    if (activeLoads < MAX_CONCURRENT) {
+      startLoad(url, resolve, reject);
+    } else {
+      queue.push({ url, resolve, reject });
+    }
   });
 
   pending.set(url, promise);

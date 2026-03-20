@@ -41,7 +41,7 @@ body.tv-platform {
 }
 
 img {
-  will-change: transform;
+  backface-visibility: hidden;
 }
 
 video {
@@ -94,4 +94,9 @@ video::-webkit-media-controls-enclosure {
   );
   background-size: 400px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
+}
+
+body.tv-platform .shimmer {
+  animation: none;
+  background: rgba(255, 255, 255, 0.06);
 }

@@ -297,10 +297,10 @@ function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
 function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const handleCanPlay = useCallback(() => {
-    setLoaded(true);
+    setVideoReady(true);
   }, []);
 
   useEffect(() => {
@@ -350,8 +350,23 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         <img
           src={poster}
           alt=""
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           decoding="async"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: '5%',
+            transform: 'translateY(-50%)',
+            maxHeight: '80%',
+            maxWidth: '45%',
+            width: 'auto',
+            height: 'auto',
+            objectFit: 'contain',
+            borderRadius: '0.75rem',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            opacity: videoReady ? 0 : 1,
+            transition: 'opacity 800ms ease-out',
+            zIndex: 1,
+          }}
         />
       )}
       <video
@@ -370,8 +385,8 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
           width: 'auto',
           height: 'auto',
           transform: 'translate(-50%, -50%)',
-          opacity: loaded ? 1 : 0,
-          transition: 'opacity 1000ms ease-out',
+          opacity: videoReady ? 1 : 0,
+          transition: 'opacity 800ms ease-out',
         }}
       />
     </>

@@ -363,11 +363,13 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         onCanPlay={handleCanPlay}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
+          top: '50%',
+          left: '50%',
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto',
+          transform: 'translate(-50%, -50%)',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 1000ms ease-out',
         }}

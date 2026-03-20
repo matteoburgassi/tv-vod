@@ -8,7 +8,7 @@ import type { DrmConfig } from '@digitalvirgo/drm-player';
 import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
+import { getArtBackground, getCoverImage, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
 import { resolveBestHlsStream } from '../utils/hlsUtils';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
@@ -156,6 +156,9 @@ export default function ContentDetailsPage() {
   const rawBg = getArtBackground(content.assets);
   const heroBg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.6)) : null;
   const playerPoster = rawBg ? sizedUrl(rawBg, window.innerWidth, window.innerHeight) : null;
+  const rawCover = getCoverImage(content.assets);
+  const vw = window.innerWidth / 100;
+  const coverImg = rawCover ? sizedUrl(rawCover, 20 * vw, 28 * vw) : null;
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
   const hasPlayableContent = !!(mainUrl || trailerUrl);
@@ -174,7 +177,7 @@ export default function ContentDetailsPage() {
 
         <div className="relative w-full overflow-hidden" style={{ minHeight: '60vh' }}>
           {trailerUrl ? (
-            <HeroTrailer src={trailerUrl} poster={heroBg} />
+            <HeroTrailer src={trailerUrl} cover={coverImg} />
           ) : heroBg ? (
             <img
               src={heroBg}
@@ -294,14 +297,23 @@ function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
   );
 }
 
-function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
+function HeroTrailer({ src, cover }: { src: string; cover: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
   const [videoReady, setVideoReady] = useState(false);
+  const [coverHidden, setCoverHidden] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!videoReady) return;
+    setCoverHidden(true);
+    const timer = setTimeout(() => setShowVideo(true), 600);
+    return () => clearTimeout(timer);
+  }, [videoReady]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -346,25 +358,23 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
 
   return (
     <>
-      {poster && (
+      {cover && (
         <img
-          src={poster}
+          src={cover}
           alt=""
           decoding="async"
           style={{
             position: 'absolute',
             top: '50%',
-            right: '5%',
+            right: '8%',
             transform: 'translateY(-50%)',
-            maxHeight: '80%',
-            maxWidth: '45%',
+            height: '75%',
             width: 'auto',
-            height: 'auto',
             objectFit: 'contain',
             borderRadius: '0.75rem',
             boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-            opacity: videoReady ? 0 : 1,
-            transition: 'opacity 800ms ease-out',
+            opacity: coverHidden ? 0 : 1,
+            transition: 'opacity 500ms ease-out',
             zIndex: 1,
           }}
         />
@@ -385,7 +395,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
           width: 'auto',
           height: 'auto',
           transform: 'translate(-50%, -50%)',
-          opacity: videoReady ? 1 : 0,
+          opacity: showVideo ? 1 : 0,
           transition: 'opacity 800ms ease-out',
         }}
       />

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import type { ContentItem } from '../types/api';
 import { getCoverImage, sizedUrl } from '../utils/assets';
-import { isImageCached, preloadImage } from '../utils/imageCache';
+import { isImageCached } from '../utils/imageCache';
 
 interface ContentCardProps {
   item: ContentItem;
@@ -43,7 +43,7 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
 
   useEffect(() => {
     if (shouldVirtualize || !cover || loaded) return;
-    preloadImage(cover).then(() => setLoaded(true)).catch(() => {});
+    if (isImageCached(cover)) setLoaded(true);
   }, [cover, loaded, shouldVirtualize]);
 
   if (shouldVirtualize) {
@@ -96,8 +96,10 @@ export default memo(function ContentCard({ item, showBadge = false, focusKeyOver
                 src={cover}
                 alt={item.title}
                 className="h-full w-full object-cover"
-                loading="eager"
+                loading={focused ? 'eager' : 'lazy'}
                 decoding="async"
+                onLoad={() => setLoaded(true)}
+                onError={() => setLoaded(true)}
                 style={{
                   opacity: loaded ? 1 : 0,
                   transition: 'opacity 150ms ease-out',

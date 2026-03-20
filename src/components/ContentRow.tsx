@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   useFocusable,
   FocusContext,
@@ -24,6 +24,37 @@ const CARD_STEP_VW = CARD_W_VW + CARD_GAP_VW;
 const ANIM_DURATION = 120;
 const VIRTUALIZE_BUFFER = 4;
 
+/** Which card indices should render real thumbnails for a horizontal offset (px) and row viewport width. */
+function visibleIndexRange(
+  itemCount: number,
+  viewportWidthPx: number,
+  horizontalOffsetPx: number,
+): [number, number] {
+  if (itemCount <= 0) return [0, 0];
+  const vw = window.innerWidth / 100;
+  const cardWPx = CARD_W_VW * vw;
+  const cardGapPx = CARD_GAP_VW * vw;
+  const cardStep = cardWPx + cardGapPx;
+  const viewStart = Math.floor(Math.max(0, -horizontalOffsetPx) / cardStep);
+  const viewEnd = Math.ceil((-horizontalOffsetPx + viewportWidthPx) / cardStep);
+  return [
+    Math.max(0, viewStart - VIRTUALIZE_BUFFER),
+    Math.min(itemCount - 1, viewEnd + VIRTUALIZE_BUFFER),
+  ];
+}
+
+/** SSR-safe guess before container is measured (avoids mounting ~15 imgs per row at once). */
+function initialVisibleRangeGuess(itemCount: number): [number, number] {
+  if (itemCount <= 0) return [0, 0];
+  if (typeof window === 'undefined') return [0, Math.min(5, itemCount - 1)];
+  const vw = window.innerWidth / 100;
+  const cardStep = (CARD_W_VW + CARD_GAP_VW) * vw;
+  const approxViewport = Math.max(160, window.innerWidth - SCROLL_PAD_VW * vw * 4);
+  const viewEnd = Math.ceil(approxViewport / cardStep);
+  const hi = Math.min(itemCount - 1, viewEnd + VIRTUALIZE_BUFFER);
+  return [0, Math.max(0, hi)];
+}
+
 export function getCardFocusKey(rowIndex: number, cardIndex: number) {
   return `row-${rowIndex}-card-${cardIndex}`;
 }
@@ -40,9 +71,29 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
   const animKeyRef = useRef({});
   const vertAnimKeyRef = useRef({});
   const focusedCardIndexRef = useRef(0);
-  const [visibleRange, setVisibleRange] = useState<[number, number]>([0, 14]);
+  const [visibleRange, setVisibleRange] = useState<[number, number]>(() =>
+    initialVisibleRangeGuess(items.length),
+  );
 
   const pendingFocusRef = useRef(0);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container || !items.length) return;
+
+    const syncRange = () => {
+      setVisibleRange(
+        visibleIndexRange(items.length, container.clientWidth, offsetRef.current),
+      );
+    };
+
+    syncRange();
+    const ro = new ResizeObserver(() => {
+      syncRange();
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [items.length]);
 
   const handleCardFocused = useCallback((el: HTMLDivElement, cardIndex: number) => {
     focusedCardIndexRef.current = cardIndex;
@@ -84,13 +135,7 @@ export default memo(function ContentRow({ title, items, showBadge = false, focus
         : 0;
       newOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
 
-      const cardStep = cardWPx + cardGapPx;
-      const viewStart = Math.floor(Math.max(0, -newOffset) / cardStep);
-      const viewEnd = Math.ceil((-newOffset + viewportWidth) / cardStep);
-      setVisibleRange([
-        Math.max(0, viewStart - VIRTUALIZE_BUFFER),
-        Math.min(items.length - 1, viewEnd + VIRTUALIZE_BUFFER),
-      ]);
+      setVisibleRange(visibleIndexRange(items.length, viewportWidth, newOffset));
 
       if (newOffset !== currentOffset) {
         animateValue(

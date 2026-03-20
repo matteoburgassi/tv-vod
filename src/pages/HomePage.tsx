@@ -80,7 +80,9 @@ export default function HomePage() {
               if (url) coverUrls.push(url);
             }
           }
-          preloadImages(coverUrls);
+          /** Warm cache for what’s likely on screen; avoid enqueueing every rail poster at once. */
+          const MAX_HOME_COVER_PRELOAD = 36;
+          preloadImages(coverUrls.slice(0, MAX_HOME_COVER_PRELOAD));
 
           const snapshot = [...rowData];
           startTransition(() => {

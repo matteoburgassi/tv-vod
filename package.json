@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx tsc -b && npx vite build",
+    "build:hosted:webos": "npx tsc -b && npx vite build --mode webos",
     "lint": "npx eslint .",
     "preview": "npx vite preview",
     "build:webos": "bash scripts/build-webos.sh",
@@ -35,6 +36,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

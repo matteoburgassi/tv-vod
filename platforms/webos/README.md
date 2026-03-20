@@ -24,6 +24,16 @@ npm run deploy:webos
 
 Installs and launches on a connected LG TV in developer mode.
 
+## Hosted Domain Build (DRM-safe)
+
+If your DRM license is bound to `tv-vod.blast.dvbuilder.com`, keep using the hosted redirect shell and publish the hosted web app with a webOS-compatible bundle:
+
+```bash
+npm run build:hosted:webos
+```
+
+This generates a transpiled `dist/` bundle (mode `webos`) suitable for older webOS JS engines.
+
 ## Setup: LG Developer Mode
 
 1. Create account at https://webostv.developer.lge.com

@@ -165,7 +165,7 @@ export default function ContentDetailsPage() {
 
   return (
     <FocusContext.Provider value={focusKey}>
-      <div ref={ref} className="pt-24">
+      <div ref={ref}>
         {showPlayer && playerUrl && (
           <VideoPlayer
             url={playerUrl}
@@ -189,7 +189,7 @@ export default function ContentDetailsPage() {
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
-          <div className="relative z-10 flex h-full w-full flex-row items-stretch gap-8 px-12 pb-16 pt-6">
+          <div className="relative z-10 flex h-full w-full flex-row items-stretch gap-8 px-12 pb-16 pt-24">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-end items-start overflow-y-auto text-left">
               <h1 className="mb-4 max-w-2xl text-4xl font-semibold text-white md:text-5xl">
                 {content.title}

@@ -268,7 +268,7 @@ export default function ContentDetailsPage() {
           </div>
         </div>
 
-        <div className="relative z-10 px-12 pb-20">
+        <div className="relative z-10 pb-20">
           {related.map((row) => (
             <ContentRow
               key={row.rubric.rubric_id}

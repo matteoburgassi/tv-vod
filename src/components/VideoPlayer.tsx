@@ -182,12 +182,12 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
             transition: 'opacity 300ms ease-out',
           }}
         >
-          <PlayerBackButton onClose={onClose} seek={seekDelta} />
+          <PlayerBackButton onClose={onClose} />
 
           <div className="absolute inset-x-0 bottom-0 p-8 pt-20" style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
             <ProgressBar progress={progress} seek={seekDelta} onClickSeek={seekToRatio} />
             <div className="mt-4 flex items-center gap-6">
-              <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} seek={seekDelta} />
+              <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} />
               <span className="text-sm" style={{ color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
                 {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
               </span>
@@ -199,7 +199,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   );
 }
 
-function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta: number) => void }) {
+function PlayerBackButton({ onClose }: { onClose: () => void }) {
   const { ref, focused } = useFocusable({
     focusKey: 'player-back',
     onEnterPress: onClose,
@@ -319,11 +319,9 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
 function PlayPauseButton({
   playing,
   onToggle,
-  seek,
 }: {
   playing: boolean;
   onToggle: () => void;
-  seek: (delta: number) => void;
 }) {
   const { ref, focused } = useFocusable({
     focusKey: 'player-playpause',

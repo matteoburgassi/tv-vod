@@ -4,10 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx vite --mode webos",
+    "dev": "npx vite",
     "build": "npx tsc -b && npx vite build",
-    "build:hosted:webos": "npx tsc -b && npx vite build --mode webos",
-    "build:all": "npx tsc -b && npx vite build && npx vite build --mode webos",
     "lint": "npx eslint .",
     "preview": "npx vite preview",
     "build:webos": "bash scripts/build-webos.sh",

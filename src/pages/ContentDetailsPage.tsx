@@ -175,7 +175,7 @@ export default function ContentDetailsPage() {
           />
         )}
 
-        <div className="relative w-full overflow-hidden" style={{ minHeight: '60vh' }}>
+        <div className="relative w-full overflow-hidden" style={{ height: '60vh' }}>
           {trailerUrl ? (
             <HeroTrailer src={trailerUrl} cover={coverImg} />
           ) : heroBg ? (
@@ -189,7 +189,7 @@ export default function ContentDetailsPage() {
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
-          <div className="relative z-10 flex min-h-[60vh] items-end px-12 pb-16 pt-32">
+          <div className="relative z-10 flex h-full items-end px-12 pb-16 pt-32">
             <div className="max-w-2xl">
               <h1 className="mb-4 text-4xl font-semibold text-white md:text-5xl">
                 {content.title}

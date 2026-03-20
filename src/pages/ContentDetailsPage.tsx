@@ -214,8 +214,14 @@ export default function ContentDetailsPage() {
             />
           ) : null}
           {trailerUrl ? <HeroTrailer src={trailerUrl} /> : null}
-          <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
-          <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
+          <div
+            className="pointer-events-none absolute inset-0 z-[2] min-h-full"
+            style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 z-[2] min-h-full"
+            style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }}
+          />
 
           <div className="relative z-10 w-full px-12 pb-16">
             <div

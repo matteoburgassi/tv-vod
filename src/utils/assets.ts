@@ -53,9 +53,19 @@ export function getHighlightTitle(assets: ContentAssets): string | null {
   return items[0].url;
 }
 
+const QUALITY_PRIORITY = [
+  'Ultra HD (4K)',
+  'Full HD (1080p)',
+  'HD (720p)',
+  'SD (480p)',
+  'SD (360p)',
+];
+
 function pickBestUrl(qualities: Record<string, { url: string }[]>): string | null {
-  const preferred = qualities['HD (720p)'];
-  if (preferred?.[0]?.url) return preferred[0].url;
+  for (const label of QUALITY_PRIORITY) {
+    const match = qualities[label];
+    if (match?.[0]?.url) return match[0].url;
+  }
 
   const firstKey = Object.keys(qualities)[0];
   if (!firstKey) return null;

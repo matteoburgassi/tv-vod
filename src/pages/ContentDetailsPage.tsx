@@ -10,6 +10,7 @@ import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
 import { getArtBackground, getCoverImage, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
 import { resolveBestHlsStream } from '../utils/hlsUtils';
+import { isTV } from '../utils/platformInit';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -211,6 +212,7 @@ export default function ContentDetailsPage() {
               alt=""
               className="absolute inset-0 z-0 h-full min-h-full w-full object-cover"
               decoding="async"
+              fetchPriority="high"
             />
           ) : null}
           {trailerUrl ? <HeroTrailer src={trailerUrl} /> : null}
@@ -404,7 +406,10 @@ function notifyTrailerReady() {
   for (const fn of trailerReadyListeners) fn();
 }
 
-const MIN_COVER_VISIBLE_MS = 2000;
+/** Shorter on TV so trailer appears sooner; desktop keeps polish delay. */
+function minCoverVisibleMs(): number {
+  return isTV() ? 900 : 2000;
+}
 
 function HeroTrailer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -413,12 +418,13 @@ function HeroTrailer({ src }: { src: string }) {
   const loadStartedAtRef = useRef(0);
   const canPlayScheduledRef = useRef(false);
   const canPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCanPlay = useCallback(() => {
+  const scheduleTrailerReveal = useCallback(() => {
     if (canPlayScheduledRef.current) return;
     canPlayScheduledRef.current = true;
     const elapsed = Date.now() - loadStartedAtRef.current;
-    const wait = Math.max(0, MIN_COVER_VISIBLE_MS - elapsed);
+    const wait = Math.max(0, minCoverVisibleMs() - elapsed);
     canPlayTimerRef.current = setTimeout(() => {
       canPlayTimerRef.current = null;
       notifyTrailerReady();
@@ -433,6 +439,10 @@ function HeroTrailer({ src }: { src: string }) {
       clearTimeout(canPlayTimerRef.current);
       canPlayTimerRef.current = null;
     }
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
 
     const onReady = () => {
       setTimeout(() => setShowVideo(true), 600);
@@ -444,6 +454,13 @@ function HeroTrailer({ src }: { src: string }) {
 
     let cancelled = false;
     const isHls = src.includes('.m3u8');
+
+    safetyTimerRef.current = setTimeout(() => {
+      safetyTimerRef.current = null;
+      if (!cancelled && !canPlayScheduledRef.current) {
+        scheduleTrailerReveal();
+      }
+    }, 14000);
 
     if (isHls) {
       const setup = async () => {
@@ -457,15 +474,27 @@ function HeroTrailer({ src }: { src: string }) {
         }
 
         const { default: Hls } = await import('hls.js');
-        if (cancelled || !Hls.isSupported()) return;
+        if (cancelled) return;
 
-        const hls = new Hls();
-        hlsRef.current = hls;
-        hls.loadSource(bestStream);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (Hls.isSupported()) {
+          const hlsConfig: Partial<import('hls.js').HlsConfig> = isTV()
+            ? {
+                maxBufferLength: 12,
+                maxMaxBufferLength: 24,
+                startFragPrefetch: true,
+              }
+            : {};
+          const hls = new Hls(hlsConfig);
+          hlsRef.current = hls;
+          hls.loadSource(bestStream);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+          });
+        } else {
+          video.src = bestStream;
           video.play().catch(() => {});
-        });
+        }
       };
       setup();
     } else {
@@ -479,10 +508,14 @@ function HeroTrailer({ src }: { src: string }) {
         clearTimeout(canPlayTimerRef.current);
         canPlayTimerRef.current = null;
       }
+      if (safetyTimerRef.current) {
+        clearTimeout(safetyTimerRef.current);
+        safetyTimerRef.current = null;
+      }
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [src]);
+  }, [src, scheduleTrailerReveal]);
 
   return (
     <div
@@ -501,7 +534,11 @@ function HeroTrailer({ src }: { src: string }) {
         muted
         loop
         playsInline
-        onCanPlay={handleCanPlay}
+        // @ts-expect-error legacy WebKit
+        webkit-playsinline=""
+        onCanPlay={scheduleTrailerReveal}
+        onLoadedData={scheduleTrailerReveal}
+        onPlaying={scheduleTrailerReveal}
         style={{
           position: 'absolute',
           top: '50%',
@@ -545,6 +582,7 @@ function HeroCover({ src, trailerUrl }: { src: string; trailerUrl: string }) {
         src={src}
         alt=""
         decoding="async"
+        fetchPriority="high"
         style={{
           maxHeight: '40vh',
           maxWidth: '100%',

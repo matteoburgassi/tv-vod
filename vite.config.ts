@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
           ]
         : []),
     ],
+    build: {
+      ...(isWebOsMode ? { outDir: 'dist/webos' } : {}),
+    },
     define: {
       __LEGACY_BUILD__: JSON.stringify(isWebOsMode),
     },

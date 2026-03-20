@@ -183,8 +183,8 @@ export default function ContentDetailsPage() {
               decoding="async"
             />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/50 to-[#120818]/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
           <div className="relative z-10 flex min-h-[60vh] items-end px-12 pb-16 pt-32">
             <div className="max-w-2xl">

@@ -159,11 +159,11 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
         >
           <PlayerBackButton onClose={onClose} seek={seekDelta} />
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-8 pt-20">
+          <div className="absolute inset-x-0 bottom-0 p-8 pt-20" style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
             <ProgressBar progress={progress} seek={seekDelta} onClickSeek={seekToRatio} />
             <div className="mt-4 flex items-center gap-6">
               <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} seek={seekDelta} />
-              <span className="text-sm text-white/80">
+              <span className="text-sm" style={{ color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
                 {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
               </span>
             </div>
@@ -264,9 +264,8 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
       <div
         className="h-full rounded-full bg-white"
         style={{
-          transform: `translate3d(0,0,0) scaleX(${progress})`,
-          transformOrigin: 'left',
-          willChange: 'transform',
+          width: `${(progress * 100).toFixed(1)}%`,
+          transition: 'width 200ms linear',
         }}
       />
     </div>

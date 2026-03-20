@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npx vite",
+    "dev": "npx vite --mode webos",
     "build": "npx tsc -b && npx vite build",
     "build:hosted:webos": "npx tsc -b && npx vite build --mode webos",
     "build:all": "npx tsc -b && npx vite build && npx vite build --mode webos",

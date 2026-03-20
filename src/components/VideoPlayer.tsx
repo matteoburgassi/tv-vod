@@ -81,6 +81,22 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
         return;
       }
 
+      if (action === 'left') {
+        e.preventDefault();
+        e.stopPropagation();
+        seekDelta(-10);
+        resetHideTimer();
+        return;
+      }
+
+      if (action === 'right') {
+        e.preventDefault();
+        e.stopPropagation();
+        seekDelta(10);
+        resetHideTimer();
+        return;
+      }
+
       if (action === 'play_pause') {
         e.preventDefault();
         e.stopPropagation();
@@ -184,11 +200,7 @@ function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta
         return false;
       }
       if (direction === 'left') {
-        seek(-10);
-        return false;
-      }
-      if (direction === 'right') {
-        seek(10);
+        setFocus('player-playpause');
         return false;
       }
       return false;
@@ -308,16 +320,12 @@ function PlayPauseButton({
     focusKey: 'player-playpause',
     onEnterPress: onToggle,
     onArrowPress: (direction: string) => {
-      if (direction === 'left') {
-        seek(-10);
+      if (direction === 'up') {
+        setFocus('player-progress');
         return false;
       }
       if (direction === 'right') {
-        seek(10);
-        return false;
-      }
-      if (direction === 'up') {
-        setFocus('player-progress');
+        setFocus('player-back');
         return false;
       }
       return false;

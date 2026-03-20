@@ -49,7 +49,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   useEffect(() => {
     play({ url, drm, autoplay: true });
     resetHideTimer();
-    setFocus('player-back');
+    setFocus('player-progress');
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
@@ -77,7 +77,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
         e.preventDefault();
         e.stopPropagation();
         resetHideTimer();
-        setFocus('player-playpause');
+        setFocus('player-progress');
         return;
       }
 
@@ -92,7 +92,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
       if (action === 'rewind') {
         e.preventDefault();
         e.stopPropagation();
-        seekDelta(-10);
+        seekDelta(-30);
         resetHideTimer();
         return;
       }
@@ -100,7 +100,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
       if (action === 'fast_forward') {
         e.preventDefault();
         e.stopPropagation();
-        seekDelta(10);
+        seekDelta(30);
         resetHideTimer();
         return;
       }
@@ -254,13 +254,13 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
         (barRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
       style={{
-        height: '0.5rem',
+        position: 'relative',
+        height: focused ? '0.75rem' : '0.5rem',
         borderRadius: '9999px',
-        overflow: 'hidden',
         cursor: 'pointer',
         backgroundColor: focused ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
         boxShadow: focused ? '0 0 0 2px rgba(255,255,255,0.6)' : 'none',
-        transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out',
+        transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out, height 150ms ease-out',
       }}
       onClick={handleClick}
     >
@@ -271,8 +271,26 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
           borderRadius: '9999px',
           backgroundColor: '#fff',
           transition: 'width 200ms linear',
+          position: 'relative',
         }}
-      />
+      >
+        {focused && (
+          <div
+            style={{
+              position: 'absolute',
+              right: '-0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '1rem',
+              height: '1rem',
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              boxShadow: '0 0 6px rgba(0,0,0,0.5)',
+              transition: 'transform 150ms ease-out',
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

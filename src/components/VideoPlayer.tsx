@@ -253,8 +253,11 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
         (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (barRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="h-2 cursor-pointer overflow-hidden rounded-full"
       style={{
+        height: '0.5rem',
+        borderRadius: '9999px',
+        overflow: 'hidden',
+        cursor: 'pointer',
         backgroundColor: focused ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
         boxShadow: focused ? '0 0 0 2px rgba(255,255,255,0.6)' : 'none',
         transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out',
@@ -262,9 +265,11 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
       onClick={handleClick}
     >
       <div
-        className="h-full rounded-full bg-white"
         style={{
+          height: '100%',
           width: `${(progress * 100).toFixed(1)}%`,
+          borderRadius: '9999px',
+          backgroundColor: '#fff',
           transition: 'width 200ms linear',
         }}
       />

@@ -172,7 +172,7 @@ export default function ContentDetailsPage() {
           />
         )}
 
-        <div className="relative min-h-[60vh] w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '60vh' }}>
           {trailerUrl ? (
             <HeroTrailer src={trailerUrl} poster={heroBg} />
           ) : heroBg ? (
@@ -350,7 +350,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         <img
           src={poster}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           decoding="async"
         />
       )}
@@ -361,8 +361,13 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         loop
         playsInline
         onCanPlay={handleCanPlay}
-        className="absolute inset-0 h-full w-full object-cover"
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 1000ms ease-out',
         }}

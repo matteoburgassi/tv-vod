@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npx vite",
-    "build": "npx tsc -b && npx vite build",
+    "build": "npx tsc -b && npx vite build && node scripts/postbuild-css-compat.js",
     "lint": "npx eslint .",
     "preview": "npx vite preview",
     "build:webos": "bash scripts/build-webos.sh",

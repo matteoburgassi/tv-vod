@@ -189,48 +189,51 @@ export default function ContentDetailsPage() {
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
-          <div className="relative z-10 flex w-full flex-row items-stretch gap-8 px-12 pb-16 pt-24">
-            <div className="flex min-w-0 flex-1 flex-col items-start justify-start gap-4 text-left">
-              <h1 className="max-w-2xl break-words text-4xl leading-tight font-semibold text-white md:text-5xl md:leading-tight">
-                {content.title}
-              </h1>
-              {content.content_type && (
-                <span className="w-fit self-start rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
-                  {content.content_type}
-                </span>
-              )}
-              {content.description && (
-                <p className="max-w-2xl text-lg leading-relaxed text-white/70">
-                  {content.description}
-                </p>
-              )}
-              {drmError && (
-                <p className="text-sm text-red-400">{drmError}</p>
-              )}
-              <DetailActions>
-                {hasPlayableContent && (
-                  <PlayButton
-                    onPress={handlePlay}
-                    loading={drmLoading}
-                    onArrowPress={handleArrowPress}
-                    focusKey="detail-play"
-                    arrowRightFocusKey="detail-back"
-                  />
+          <div className="relative z-10 w-full px-12 pb-16">
+            <div className="h-24 shrink-0 md:h-28" aria-hidden />
+            <div className="flex w-full flex-row items-stretch gap-8">
+              <div className="flex min-w-0 flex-1 flex-col items-start justify-start gap-4 text-left">
+                <h1 className="max-w-2xl break-words text-4xl leading-tight font-semibold text-white md:text-5xl md:leading-tight">
+                  {content.title}
+                </h1>
+                {content.content_type && (
+                  <span className="w-fit self-start rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
+                    {content.content_type}
+                  </span>
                 )}
-                <BackButton
-                  onPress={() => navigate(-1)}
-                  onArrowPress={handleArrowPress}
-                  focusKey="detail-back"
-                  arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
-                />
-              </DetailActions>
-            </div>
-
-            {trailerUrl && coverImg ? (
-              <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
-                <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+                {content.description && (
+                  <p className="max-w-2xl text-lg leading-relaxed text-white/70">
+                    {content.description}
+                  </p>
+                )}
+                {drmError && (
+                  <p className="text-sm text-red-400">{drmError}</p>
+                )}
+                <DetailActions>
+                  {hasPlayableContent && (
+                    <PlayButton
+                      onPress={handlePlay}
+                      loading={drmLoading}
+                      onArrowPress={handleArrowPress}
+                      focusKey="detail-play"
+                      arrowRightFocusKey="detail-back"
+                    />
+                  )}
+                  <BackButton
+                    onPress={() => navigate(-1)}
+                    onArrowPress={handleArrowPress}
+                    focusKey="detail-back"
+                    arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
+                  />
+                </DetailActions>
               </div>
-            ) : null}
+
+              {trailerUrl && coverImg ? (
+                <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
+                  <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 

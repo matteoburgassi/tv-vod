@@ -18,6 +18,11 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   const showControlsRef = useRef(showControls);
   showControlsRef.current = showControls;
 
+  const playerStateRef = useRef(playerState);
+  playerStateRef.current = playerState;
+  const playerSeekRef = useRef(playerSeek);
+  playerSeekRef.current = playerSeek;
+
   const { ref, focusKey } = useFocusable({
     focusKey: 'video-player',
     isFocusBoundary: true,
@@ -30,21 +35,24 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     hideTimer.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
-  const togglePlay = useCallback(() => {
+  const togglePlayRef = useRef(() => {});
+  togglePlayRef.current = () => {
     if (playerState.playing) {
       playerPause();
     } else {
       playerResume();
     }
-  }, [playerState.playing, playerPause, playerResume]);
+  };
+  const togglePlay = useCallback(() => togglePlayRef.current(), []);
 
   const seekDelta = useCallback((delta: number) => {
-    playerSeek(playerState.currentTime + delta);
-  }, [playerSeek, playerState.currentTime]);
+    const t = playerStateRef.current.currentTime + delta;
+    playerSeekRef.current(Math.max(0, t));
+  }, []);
 
   const seekToRatio = useCallback((ratio: number) => {
-    playerSeek(ratio * playerState.duration);
-  }, [playerSeek, playerState.duration]);
+    playerSeekRef.current(ratio * playerStateRef.current.duration);
+  }, []);
 
   useEffect(() => {
     play({ url, drm, autoplay: true });
@@ -136,6 +144,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     window.addEventListener('keydown', interceptor, { capture: true });
     return () => window.removeEventListener('keydown', interceptor, { capture: true });
   }, [onClose, resetHideTimer, togglePlay, seekDelta]);
+  // All callbacks above are stable (no deps or ref-based), so this effect registers once.
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);

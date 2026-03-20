@@ -433,16 +433,16 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
 
     if (isHls) {
       const setup = async () => {
-        if (video.canPlayType('application/vnd.apple.mpegurl') ||
-            video.canPlayType('application/x-mpegURL')) {
-          video.src = src;
-          tryPlay();
-          return;
-        }
-
         let bestStream = src;
         try { bestStream = await resolveBestHlsStream(src); } catch { /* use master */ }
         if (cancelled) return;
+
+        if (video.canPlayType('application/vnd.apple.mpegurl') ||
+            video.canPlayType('application/x-mpegURL')) {
+          video.src = bestStream;
+          tryPlay();
+          return;
+        }
 
         try {
           const { default: Hls } = await import('hls.js');

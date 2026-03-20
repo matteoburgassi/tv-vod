@@ -205,23 +205,24 @@ export default function ContentDetailsPage() {
           />
         )}
 
-        <div className="relative w-full min-h-[60vh] overflow-x-hidden">
-          {heroBg ? (
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '60vh' }}>
+          {trailerUrl ? (
+            <HeroTrailer src={trailerUrl} poster={heroBg} />
+          ) : heroBg ? (
             <img
               src={heroBg}
               alt=""
-              className="absolute inset-0 z-0 h-full min-h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               decoding="async"
               fetchPriority="high"
             />
           ) : null}
-          {trailerUrl ? <HeroTrailer src={trailerUrl} /> : null}
           <div
-            className="pointer-events-none absolute inset-0 z-[6] min-h-full"
+            className="absolute inset-0"
             style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }}
           />
           <div
-            className="pointer-events-none absolute inset-0 z-[6] min-h-full"
+            className="absolute inset-0"
             style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }}
           />
 
@@ -268,9 +269,23 @@ export default function ContentDetailsPage() {
                 </DetailActions>
               </div>
 
-              {trailerUrl && coverImg ? (
+              {coverImg ? (
                 <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
-                  <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+                  <img
+                    src={coverImg}
+                    alt=""
+                    decoding="async"
+                    fetchPriority="high"
+                    style={{
+                      maxHeight: '40vh',
+                      maxWidth: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                    }}
+                  />
                 </div>
               ) : null}
             </div>
@@ -398,69 +413,21 @@ function BackButton({
   );
 }
 
-let heroTrailerReady = false;
-const trailerReadyListeners = new Set<() => void>();
-
-function notifyTrailerReady() {
-  heroTrailerReady = true;
-  for (const fn of trailerReadyListeners) fn();
-}
-
-/** Shorter on TV so trailer appears sooner; desktop keeps polish delay. */
-function minCoverVisibleMs(): number {
-  return isTV() ? 900 : 2000;
-}
-
-function HeroTrailer({ src }: { src: string }) {
+function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
-  const [showVideo, setShowVideo] = useState(false);
-  const loadStartedAtRef = useRef(0);
-  const canPlayScheduledRef = useRef(false);
-  const canPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-  const scheduleTrailerReveal = useCallback(() => {
-    if (canPlayScheduledRef.current) return;
-    canPlayScheduledRef.current = true;
-    const elapsed = Date.now() - loadStartedAtRef.current;
-    const wait = Math.max(0, minCoverVisibleMs() - elapsed);
-    canPlayTimerRef.current = setTimeout(() => {
-      canPlayTimerRef.current = null;
-      notifyTrailerReady();
-    }, wait);
+  const handleCanPlay = useCallback(() => {
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
-    heroTrailerReady = false;
-    loadStartedAtRef.current = Date.now();
-    canPlayScheduledRef.current = false;
-    if (canPlayTimerRef.current) {
-      clearTimeout(canPlayTimerRef.current);
-      canPlayTimerRef.current = null;
-    }
-    if (safetyTimerRef.current) {
-      clearTimeout(safetyTimerRef.current);
-      safetyTimerRef.current = null;
-    }
-
-    const onReady = () => {
-      setTimeout(() => setShowVideo(true), 600);
-    };
-    trailerReadyListeners.add(onReady);
-
     const video = videoRef.current;
     if (!video || !src) return;
 
     let cancelled = false;
     const isHls = src.includes('.m3u8');
-
-    safetyTimerRef.current = setTimeout(() => {
-      safetyTimerRef.current = null;
-      if (!cancelled && !canPlayScheduledRef.current) {
-        scheduleTrailerReveal();
-      }
-    }, 14000);
 
     const tryPlay = () => { video.play().catch(() => {}); };
 
@@ -505,91 +472,44 @@ function HeroTrailer({ src }: { src: string }) {
 
     return () => {
       cancelled = true;
-      trailerReadyListeners.delete(onReady);
-      if (canPlayTimerRef.current) {
-        clearTimeout(canPlayTimerRef.current);
-        canPlayTimerRef.current = null;
-      }
-      if (safetyTimerRef.current) {
-        clearTimeout(safetyTimerRef.current);
-        safetyTimerRef.current = null;
-      }
       hlsRef.current?.destroy();
       hlsRef.current = null;
-      try { video.pause(); video.removeAttribute('src'); video.load(); } catch { /* */ }
     };
-  }, [src, scheduleTrailerReveal]);
+  }, [src]);
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 5,
-        pointerEvents: 'none',
-        opacity: showVideo ? 1 : 0,
-        transition: 'opacity 800ms ease-out',
-      }}
-    >
+    <>
+      {poster && (
+        <img
+          src={poster}
+          alt=""
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          decoding="async"
+          fetchPriority="high"
+        />
+      )}
       <video
         ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
-        webkit-playsinline=""
-        onCanPlay={scheduleTrailerReveal}
-        onLoadedData={scheduleTrailerReveal}
-        onPlaying={scheduleTrailerReveal}
+        onCanPlay={handleCanPlay}
+        onLoadedData={handleCanPlay}
+        onPlaying={handleCanPlay}
         style={{
           position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
-      />
-    </div>
-  );
-}
-
-function HeroCover({ src, trailerUrl }: { src: string; trailerUrl: string }) {
-  const [hidden, setHidden] = useState(false);
-
-  useEffect(() => {
-    if (heroTrailerReady) {
-      setHidden(true);
-      return;
-    }
-    const onReady = () => setHidden(true);
-    trailerReadyListeners.add(onReady);
-    return () => { trailerReadyListeners.delete(onReady); };
-  }, [trailerUrl]);
-
-  return (
-    <div
-      style={{
-        pointerEvents: 'none',
-        opacity: hidden ? 0 : 1,
-        transition: 'opacity 500ms ease-out',
-        maxWidth: '100%',
-      }}
-    >
-      <img
-        src={src}
-        alt=""
-        decoding="async"
-        fetchPriority="high"
-        style={{
-          maxHeight: '40vh',
-          maxWidth: '100%',
+          top: '50%',
+          left: '50%',
+          minWidth: '100%',
+          minHeight: '100%',
           width: 'auto',
           height: 'auto',
-          objectFit: 'contain',
-          borderRadius: '0.75rem',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          transform: 'translate(-50%, -50%)',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 1000ms ease-out',
         }}
       />
-    </div>
+    </>
   );
 }

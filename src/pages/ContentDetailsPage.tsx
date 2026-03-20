@@ -205,9 +205,20 @@ export default function ContentDetailsPage() {
                 )}
                 <DetailActions>
                   {hasPlayableContent && (
-                    <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
+                    <PlayButton
+                      onPress={handlePlay}
+                      loading={drmLoading}
+                      onArrowPress={handleArrowPress}
+                      focusKey="detail-play"
+                      arrowRightFocusKey="detail-back"
+                    />
                   )}
-                  <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
+                  <BackButton
+                    onPress={() => navigate(-1)}
+                    onArrowPress={handleArrowPress}
+                    focusKey="detail-back"
+                    arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
+                  />
                 </DetailActions>
               </div>
 
@@ -254,8 +265,30 @@ function DetailActions({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; loading?: boolean; onArrowPress?: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress, onArrowPress });
+function PlayButton({
+  onPress,
+  loading,
+  onArrowPress,
+  focusKey,
+  arrowRightFocusKey,
+}: {
+  onPress: () => void;
+  loading?: boolean;
+  onArrowPress?: (direction: string) => boolean;
+  focusKey?: string;
+  arrowRightFocusKey?: string;
+}) {
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: loading ? undefined : onPress,
+    onArrowPress: (direction: string) => {
+      if (direction === 'right' && arrowRightFocusKey) {
+        setFocus(arrowRightFocusKey);
+        return false;
+      }
+      return onArrowPress?.(direction) ?? true;
+    },
+  });
 
   return (
     <button
@@ -284,8 +317,28 @@ function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; l
   );
 }
 
-function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress?: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
+function BackButton({
+  onPress,
+  onArrowPress,
+  focusKey,
+  arrowLeftFocusKey,
+}: {
+  onPress: () => void;
+  onArrowPress?: (direction: string) => boolean;
+  focusKey?: string;
+  arrowLeftFocusKey?: string;
+}) {
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: onPress,
+    onArrowPress: (direction: string) => {
+      if (direction === 'left' && arrowLeftFocusKey) {
+        setFocus(arrowLeftFocusKey);
+        return false;
+      }
+      return onArrowPress?.(direction) ?? true;
+    },
+  });
 
   return (
     <button

@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
           ]
         : []),
     ],
+    define: {
+      __LEGACY_BUILD__: JSON.stringify(isWebOsMode),
+    },
     optimizeDeps: {
       exclude: ['@digitalvirgo/drm-player'],
       include: ['blueimp-md5'],

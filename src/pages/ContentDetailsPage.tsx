@@ -195,7 +195,7 @@ export default function ContentDetailsPage() {
                 {content.title}
               </h1>
               {content.content_type && (
-                <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
+                <span className="mb-4 w-fit self-start rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
                   {content.content_type}
                 </span>
               )}

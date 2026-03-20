@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  /* Fallback until App measures fixed <header>; keeps detail title below bar on TV. */
+  --header-safe: 160px;
+}
+
 @theme {
   --color-fuchsia-500: #e91e8c;
   --color-sky-400: #e91e8c;

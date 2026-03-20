@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
@@ -19,13 +19,19 @@ interface RelatedRow {
   items: ContentItem[];
 }
 
-/** Spacer clears fixed header; px min for old webOS where root `rem` is small. */
-const DETAIL_TOP_SPACER_CLASS = 'min-h-[140px] shrink-0 w-full md:min-h-[9rem]';
+const HEADER_SPACER_EXTRA_PX = 28;
+
+function measureHeaderSafePx(): number {
+  const el = document.querySelector('header');
+  if (!el) return 160;
+  return Math.ceil(el.getBoundingClientRect().height) + HEADER_SPACER_EXTRA_PX;
+}
 
 export default function ContentDetailsPage() {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [headerSpacerPx, setHeaderSpacerPx] = useState(160);
   const [content, setContent] = useState<ContentItem | null>(null);
   const [related, setRelated] = useState<RelatedRow[]>([]);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -34,7 +40,7 @@ export default function ContentDetailsPage() {
   const [drmError, setDrmError] = useState<string | null>(null);
   const [playerUrl, setPlayerUrl] = useState<string | null>(null);
   const [drmConfig, setDrmConfig] = useState<DrmConfig | undefined>();
-  const { ref, focusKey, focusSelf } = useFocusable({});
+  const { ref, focusKey } = useFocusable({});
 
   useEffect(() => {
     let cancelled = false;
@@ -75,9 +81,27 @@ export default function ContentDetailsPage() {
     return () => { cancelled = true; };
   }, [contentId]);
 
+  useLayoutEffect(() => {
+    const sync = () => setHeaderSpacerPx(measureHeaderSafePx());
+    sync();
+    window.addEventListener('resize', sync);
+    const t = window.setTimeout(sync, 0);
+    const t2 = window.setTimeout(sync, 450);
+    return () => {
+      window.removeEventListener('resize', sync);
+      window.clearTimeout(t);
+      window.clearTimeout(t2);
+    };
+  }, []);
+
   useEffect(() => {
-    if (!loading) focusSelf();
-  }, [loading, focusSelf]);
+    if (!loading) {
+      window.requestAnimationFrame(() => {
+        setHeaderSpacerPx(measureHeaderSafePx());
+        setFocus('detail-actions');
+      });
+    }
+  }, [loading]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -193,7 +217,11 @@ export default function ContentDetailsPage() {
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
           <div className="relative z-10 w-full px-12 pb-16">
-            <div className={DETAIL_TOP_SPACER_CLASS} aria-hidden />
+            <div
+              className="w-full shrink-0"
+              style={{ minHeight: `${headerSpacerPx}px` }}
+              aria-hidden
+            />
             <div className="flex w-full flex-row items-stretch gap-8">
               <div className="flex min-w-0 flex-1 flex-col items-start justify-start gap-4 text-left">
                 <h1 className="max-w-2xl break-words text-4xl leading-tight font-semibold text-white md:text-5xl md:leading-tight">

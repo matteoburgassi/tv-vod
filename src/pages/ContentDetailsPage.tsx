@@ -271,21 +271,25 @@ export default function ContentDetailsPage() {
 
               {coverImg ? (
                 <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
-                  <img
-                    src={coverImg}
-                    alt=""
-                    decoding="async"
-                    fetchPriority="high"
-                    style={{
-                      maxHeight: '40vh',
-                      maxWidth: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      borderRadius: '0.75rem',
-                      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-                    }}
-                  />
+                  {trailerUrl ? (
+                    <HeroCover src={coverImg} />
+                  ) : (
+                    <img
+                      src={coverImg}
+                      alt=""
+                      decoding="async"
+                      fetchPriority="high"
+                      style={{
+                        maxHeight: '40vh',
+                        maxWidth: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: '0.75rem',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                      }}
+                    />
+                  )}
                 </div>
               ) : null}
             </div>
@@ -413,6 +417,45 @@ function BackButton({
   );
 }
 
+let heroTrailerReady = false;
+const trailerReadyListeners = new Set<() => void>();
+
+function notifyTrailerReady() {
+  heroTrailerReady = true;
+  for (const fn of trailerReadyListeners) fn();
+}
+
+function HeroCover({ src }: { src: string }) {
+  const [hidden, setHidden] = useState(() => heroTrailerReady);
+
+  useEffect(() => {
+    if (heroTrailerReady) { setHidden(true); return; }
+    const onReady = () => setHidden(true);
+    trailerReadyListeners.add(onReady);
+    return () => { trailerReadyListeners.delete(onReady); };
+  }, []);
+
+  return (
+    <img
+      src={src}
+      alt=""
+      decoding="async"
+      fetchPriority="high"
+      style={{
+        maxHeight: '40vh',
+        maxWidth: '100%',
+        width: 'auto',
+        height: 'auto',
+        objectFit: 'contain',
+        borderRadius: '0.75rem',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        opacity: hidden ? 0 : 1,
+        transition: 'opacity 500ms ease-out',
+      }}
+    />
+  );
+}
+
 function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
@@ -420,9 +463,11 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
 
   const handleCanPlay = useCallback(() => {
     setLoaded(true);
+    notifyTrailerReady();
   }, []);
 
   useEffect(() => {
+    heroTrailerReady = false;
     const video = videoRef.current;
     if (!video || !src) return;
 

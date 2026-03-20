@@ -189,50 +189,49 @@ export default function ContentDetailsPage() {
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
-          <div className="relative z-10 flex h-full items-end px-12 pb-16 pt-32">
-            <div className="flex flex-1 items-center">
-              <div className="max-w-2xl">
-                <h1 className="mb-4 text-4xl font-semibold text-white md:text-5xl">
-                  {content.title}
-                </h1>
-                {content.content_type && (
-                  <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
-                    {content.content_type}
-                  </span>
-                )}
-                {drmError && (
-                  <p className="mb-2 text-sm text-red-400">{drmError}</p>
-                )}
-                <DetailActions>
-                  {hasPlayableContent && (
-                    <PlayButton
-                      onPress={handlePlay}
-                      loading={drmLoading}
-                      onArrowPress={handleArrowPress}
-                      focusKey="detail-play"
-                      arrowRightFocusKey="detail-back"
-                    />
-                  )}
-                  <BackButton
-                    onPress={() => navigate(-1)}
-                    onArrowPress={handleArrowPress}
-                    focusKey="detail-back"
-                    arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
-                  />
-                </DetailActions>
-              </div>
-
-              {trailerUrl && coverImg && (
-                <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+          <div className="relative z-10 flex h-full w-full flex-row items-stretch gap-8 px-12 pb-16 pt-32">
+            <div className="flex min-w-0 flex-1 flex-col justify-end items-start text-left">
+              <h1 className="mb-4 max-w-2xl text-4xl font-semibold text-white md:text-5xl">
+                {content.title}
+              </h1>
+              {content.content_type && (
+                <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
+                  {content.content_type}
+                </span>
               )}
+              {content.description && (
+                <p className="mb-4 max-w-2xl text-lg leading-relaxed text-white/70">
+                  {content.description}
+                </p>
+              )}
+              {drmError && (
+                <p className="mb-2 text-sm text-red-400">{drmError}</p>
+              )}
+              <DetailActions>
+                {hasPlayableContent && (
+                  <PlayButton
+                    onPress={handlePlay}
+                    loading={drmLoading}
+                    onArrowPress={handleArrowPress}
+                    focusKey="detail-play"
+                    arrowRightFocusKey="detail-back"
+                  />
+                )}
+                <BackButton
+                  onPress={() => navigate(-1)}
+                  onArrowPress={handleArrowPress}
+                  focusKey="detail-back"
+                  arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
+                />
+              </DetailActions>
             </div>
-          </div>
-        </div>
 
-        <div className="relative z-10 -mt-8 px-12 pb-8">
-          <p className="max-w-3xl text-lg leading-relaxed text-white/70">
-            {content.description}
-          </p>
+            {trailerUrl && coverImg ? (
+              <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
+                <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="relative z-10 pb-20">
@@ -462,13 +461,10 @@ function HeroCover({ src, trailerUrl }: { src: string; trailerUrl: string }) {
   return (
     <div
       style={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
         pointerEvents: 'none',
         opacity: hidden ? 0 : 1,
         transition: 'opacity 500ms ease-out',
+        maxWidth: '100%',
       }}
     >
       <img
@@ -477,7 +473,9 @@ function HeroCover({ src, trailerUrl }: { src: string; trailerUrl: string }) {
         decoding="async"
         style={{
           maxHeight: '40vh',
+          maxWidth: '100%',
           width: 'auto',
+          height: 'auto',
           objectFit: 'contain',
           borderRadius: '0.75rem',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',

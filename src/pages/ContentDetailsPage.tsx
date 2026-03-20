@@ -172,7 +172,7 @@ export default function ContentDetailsPage() {
           />
         )}
 
-        <div className="relative min-h-[60vh] w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden" style={{ minHeight: '60vh' }}>
           {trailerUrl ? (
             <HeroTrailer src={trailerUrl} poster={heroBg} />
           ) : heroBg ? (
@@ -183,8 +183,8 @@ export default function ContentDetailsPage() {
               decoding="async"
             />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/50 to-[#120818]/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
           <div className="relative z-10 flex min-h-[60vh] items-end px-12 pb-16 pt-32">
             <div className="max-w-2xl">
@@ -350,7 +350,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         <img
           src={poster}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           decoding="async"
         />
       )}
@@ -361,8 +361,15 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         loop
         playsInline
         onCanPlay={handleCanPlay}
-        className="absolute inset-0 h-full w-full object-cover"
         style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto',
+          transform: 'translate(-50%, -50%)',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 1000ms ease-out',
         }}

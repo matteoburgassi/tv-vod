@@ -18,6 +18,11 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   const showControlsRef = useRef(showControls);
   showControlsRef.current = showControls;
 
+  const playerStateRef = useRef(playerState);
+  playerStateRef.current = playerState;
+  const playerSeekRef = useRef(playerSeek);
+  playerSeekRef.current = playerSeek;
+
   const { ref, focusKey } = useFocusable({
     focusKey: 'video-player',
     isFocusBoundary: true,
@@ -30,26 +35,29 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     hideTimer.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
-  const togglePlay = useCallback(() => {
+  const togglePlayRef = useRef(() => {});
+  togglePlayRef.current = () => {
     if (playerState.playing) {
       playerPause();
     } else {
       playerResume();
     }
-  }, [playerState.playing, playerPause, playerResume]);
+  };
+  const togglePlay = useCallback(() => togglePlayRef.current(), []);
 
   const seekDelta = useCallback((delta: number) => {
-    playerSeek(playerState.currentTime + delta);
-  }, [playerSeek, playerState.currentTime]);
+    const t = playerStateRef.current.currentTime + delta;
+    playerSeekRef.current(Math.max(0, t));
+  }, []);
 
   const seekToRatio = useCallback((ratio: number) => {
-    playerSeek(ratio * playerState.duration);
-  }, [playerSeek, playerState.duration]);
+    playerSeekRef.current(ratio * playerStateRef.current.duration);
+  }, []);
 
   useEffect(() => {
     play({ url, drm, autoplay: true });
     resetHideTimer();
-    setFocus('player-back');
+    setFocus('player-progress');
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
@@ -77,7 +85,23 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
         e.preventDefault();
         e.stopPropagation();
         resetHideTimer();
-        setFocus('player-playpause');
+        setFocus('player-progress');
+        return;
+      }
+
+      if (action === 'left') {
+        e.preventDefault();
+        e.stopPropagation();
+        seekDelta(-10);
+        resetHideTimer();
+        return;
+      }
+
+      if (action === 'right') {
+        e.preventDefault();
+        e.stopPropagation();
+        seekDelta(10);
+        resetHideTimer();
         return;
       }
 
@@ -92,7 +116,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
       if (action === 'rewind') {
         e.preventDefault();
         e.stopPropagation();
-        seekDelta(-10);
+        seekDelta(-30);
         resetHideTimer();
         return;
       }
@@ -100,7 +124,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
       if (action === 'fast_forward') {
         e.preventDefault();
         e.stopPropagation();
-        seekDelta(10);
+        seekDelta(30);
         resetHideTimer();
         return;
       }
@@ -120,6 +144,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
     window.addEventListener('keydown', interceptor, { capture: true });
     return () => window.removeEventListener('keydown', interceptor, { capture: true });
   }, [onClose, resetHideTimer, togglePlay, seekDelta]);
+  // All callbacks above are stable (no deps or ref-based), so this effect registers once.
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -157,13 +182,13 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
             transition: 'opacity 300ms ease-out',
           }}
         >
-          <PlayerBackButton onClose={onClose} seek={seekDelta} />
+          <PlayerBackButton onClose={onClose} />
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-8 pt-20">
+          <div className="absolute inset-x-0 bottom-0 p-8 pt-20" style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
             <ProgressBar progress={progress} seek={seekDelta} onClickSeek={seekToRatio} />
             <div className="mt-4 flex items-center gap-6">
-              <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} seek={seekDelta} />
-              <span className="text-sm text-white/80">
+              <PlayPauseButton playing={playerState.playing} onToggle={togglePlay} />
+              <span className="text-sm" style={{ color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
                 {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
               </span>
             </div>
@@ -174,7 +199,7 @@ export default function VideoPlayer({ url, poster, drm, onClose }: VideoPlayerPr
   );
 }
 
-function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta: number) => void }) {
+function PlayerBackButton({ onClose }: { onClose: () => void }) {
   const { ref, focused } = useFocusable({
     focusKey: 'player-back',
     onEnterPress: onClose,
@@ -184,11 +209,7 @@ function PlayerBackButton({ onClose, seek }: { onClose: () => void; seek: (delta
         return false;
       }
       if (direction === 'left') {
-        seek(-10);
-        return false;
-      }
-      if (direction === 'right') {
-        seek(10);
+        setFocus('player-playpause');
         return false;
       }
       return false;
@@ -253,22 +274,44 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
         (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
         (barRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="h-2 cursor-pointer overflow-hidden rounded-full"
       style={{
+        position: 'relative',
+        height: focused ? '0.75rem' : '0.5rem',
+        borderRadius: '9999px',
+        cursor: 'pointer',
         backgroundColor: focused ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
         boxShadow: focused ? '0 0 0 2px rgba(255,255,255,0.6)' : 'none',
-        transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out',
+        transition: 'background-color 150ms ease-out, box-shadow 150ms ease-out, height 150ms ease-out',
       }}
       onClick={handleClick}
     >
       <div
-        className="h-full rounded-full bg-white"
         style={{
-          transform: `translate3d(0,0,0) scaleX(${progress})`,
-          transformOrigin: 'left',
-          willChange: 'transform',
+          height: '100%',
+          width: `${(progress * 100).toFixed(1)}%`,
+          borderRadius: '9999px',
+          backgroundColor: '#fff',
+          transition: 'width 200ms linear',
+          position: 'relative',
         }}
-      />
+      >
+        {focused && (
+          <div
+            style={{
+              position: 'absolute',
+              right: '-0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '1rem',
+              height: '1rem',
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              boxShadow: '0 0 6px rgba(0,0,0,0.5)',
+              transition: 'transform 150ms ease-out',
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -276,26 +319,20 @@ function ProgressBar({ progress, seek, onClickSeek }: { progress: number; seek: 
 function PlayPauseButton({
   playing,
   onToggle,
-  seek,
 }: {
   playing: boolean;
   onToggle: () => void;
-  seek: (delta: number) => void;
 }) {
   const { ref, focused } = useFocusable({
     focusKey: 'player-playpause',
     onEnterPress: onToggle,
     onArrowPress: (direction: string) => {
-      if (direction === 'left') {
-        seek(-10);
+      if (direction === 'up') {
+        setFocus('player-progress');
         return false;
       }
       if (direction === 'right') {
-        seek(10);
-        return false;
-      }
-      if (direction === 'up') {
-        setFocus('player-progress');
+        setFocus('player-back');
         return false;
       }
       return false;

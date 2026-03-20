@@ -1,8 +1,33 @@
+const MAX_CACHE_SIZE = 50;
+
 const cache = new Map<string, HTMLImageElement>();
 const pending = new Map<string, Promise<HTMLImageElement>>();
 
+function evictOldest(): void {
+  if (cache.size <= MAX_CACHE_SIZE) return;
+  const oldest = cache.keys().next().value;
+  if (oldest !== undefined) {
+    const img = cache.get(oldest);
+    if (img) {
+      img.src = '';
+    }
+    cache.delete(oldest);
+  }
+}
+
+function touchEntry(url: string): void {
+  const img = cache.get(url);
+  if (img) {
+    cache.delete(url);
+    cache.set(url, img);
+  }
+}
+
 export function preloadImage(url: string): Promise<HTMLImageElement> {
-  if (cache.has(url)) return Promise.resolve(cache.get(url)!);
+  if (cache.has(url)) {
+    touchEntry(url);
+    return Promise.resolve(cache.get(url)!);
+  }
 
   const existing = pending.get(url);
   if (existing) return existing;
@@ -13,6 +38,7 @@ export function preloadImage(url: string): Promise<HTMLImageElement> {
     img.onload = () => {
       cache.set(url, img);
       pending.delete(url);
+      evictOldest();
       resolve(img);
     };
     img.onerror = () => {

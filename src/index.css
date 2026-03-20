@@ -41,7 +41,7 @@ body.tv-platform {
 }
 
 img {
-  content-visibility: auto;
+  will-change: transform;
 }
 
 video {

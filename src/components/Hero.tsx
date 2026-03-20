@@ -83,8 +83,8 @@ export default function Hero({ items, firstRowFocusKey }: HeroProps) {
             decoding="async"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#120818] via-[#120818]/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#120818]/80 via-transparent to-transparent" />
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.4) 50%, transparent)' }} />
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
         <div className="absolute bottom-[3.3vw] left-[2.5vw] z-10 max-w-[45vw]">
           {titleImg ? (

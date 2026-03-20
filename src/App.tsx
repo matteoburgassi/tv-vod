@@ -1,14 +1,16 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
 import Toast from './components/Toast';
+import LoadingSpinner from './components/LoadingSpinner';
 import HomePage from './pages/HomePage';
-import ContentDetailsPage from './pages/ContentDetailsPage';
-import SearchPage from './pages/SearchPage';
-import LoginPage from './pages/LoginPage';
-import PairPage from './pages/PairPage';
+
+const ContentDetailsPage = lazy(() => import('./pages/ContentDetailsPage'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const PairPage = lazy(() => import('./pages/PairPage'));
 
 init({
   debug: false,
@@ -56,25 +58,27 @@ function AppLayout() {
           scrollbarWidth: 'none',
         }}
       >
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/pair" element={<PairPage />} />
-          <Route
-            path="*"
-            element={
-              <>
-                <Header />
-                <main>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/content/:contentId" element={<ContentDetailsPage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                  </Routes>
-                </main>
-              </>
-            }
-          />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/pair" element={<PairPage />} />
+            <Route
+              path="*"
+              element={
+                <>
+                  <Header />
+                  <main>
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/content/:contentId" element={<ContentDetailsPage />} />
+                      <Route path="/search" element={<SearchPage />} />
+                    </Routes>
+                  </main>
+                </>
+              }
+            />
+          </Routes>
+        </Suspense>
         {showLoginToast && <Toast message="Signed in successfully" onDone={dismissToast} />}
       </div>
     </FocusContext.Provider>

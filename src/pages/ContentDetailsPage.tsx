@@ -19,6 +19,9 @@ interface RelatedRow {
   items: ContentItem[];
 }
 
+/** Spacer clears fixed header; px min for old webOS where root `rem` is small. */
+const DETAIL_TOP_SPACER_CLASS = 'min-h-[140px] shrink-0 w-full md:min-h-[9rem]';
+
 export default function ContentDetailsPage() {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
@@ -190,7 +193,7 @@ export default function ContentDetailsPage() {
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
           <div className="relative z-10 w-full px-12 pb-16">
-            <div className="h-24 shrink-0 md:h-28" aria-hidden />
+            <div className={DETAIL_TOP_SPACER_CLASS} aria-hidden />
             <div className="flex w-full flex-row items-stretch gap-8">
               <div className="flex min-w-0 flex-1 flex-col items-start justify-start gap-4 text-left">
                 <h1 className="max-w-2xl break-words text-4xl leading-tight font-semibold text-white md:text-5xl md:leading-tight">
@@ -237,7 +240,7 @@ export default function ContentDetailsPage() {
           </div>
         </div>
 
-        <div className="relative z-10 pb-20">
+        <div className="relative z-10 px-12 pb-20">
           {related.map((row) => (
             <ContentRow
               key={row.rubric.rubric_id}

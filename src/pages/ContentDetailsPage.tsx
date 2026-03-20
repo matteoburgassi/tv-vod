@@ -205,16 +205,15 @@ export default function ContentDetailsPage() {
         )}
 
         <div className="relative w-full min-h-[60vh] overflow-x-hidden">
-          {trailerUrl ? (
-            <HeroTrailer src={trailerUrl} />
-          ) : heroBg ? (
+          {heroBg ? (
             <img
               src={heroBg}
               alt=""
-              className="absolute inset-0 h-full min-h-full w-full object-cover"
+              className="absolute inset-0 z-0 h-full min-h-full w-full object-cover"
               decoding="async"
             />
           ) : null}
+          {trailerUrl ? <HeroTrailer src={trailerUrl} /> : null}
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
           <div className="pointer-events-none absolute inset-0 min-h-full" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
@@ -484,6 +483,7 @@ function HeroTrailer({ src }: { src: string }) {
       style={{
         position: 'absolute',
         inset: 0,
+        zIndex: 1,
         minHeight: '100%',
         overflow: 'hidden',
         pointerEvents: 'none',

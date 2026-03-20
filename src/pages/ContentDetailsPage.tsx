@@ -399,17 +399,35 @@ function notifyTrailerReady() {
   for (const fn of trailerReadyListeners) fn();
 }
 
+const MIN_COVER_VISIBLE_MS = 2000;
+
 function HeroTrailer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
   const [showVideo, setShowVideo] = useState(false);
+  const loadStartedAtRef = useRef(0);
+  const canPlayScheduledRef = useRef(false);
+  const canPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCanPlay = useCallback(() => {
-    notifyTrailerReady();
+    if (canPlayScheduledRef.current) return;
+    canPlayScheduledRef.current = true;
+    const elapsed = Date.now() - loadStartedAtRef.current;
+    const wait = Math.max(0, MIN_COVER_VISIBLE_MS - elapsed);
+    canPlayTimerRef.current = setTimeout(() => {
+      canPlayTimerRef.current = null;
+      notifyTrailerReady();
+    }, wait);
   }, []);
 
   useEffect(() => {
     heroTrailerReady = false;
+    loadStartedAtRef.current = Date.now();
+    canPlayScheduledRef.current = false;
+    if (canPlayTimerRef.current) {
+      clearTimeout(canPlayTimerRef.current);
+      canPlayTimerRef.current = null;
+    }
 
     const onReady = () => {
       setTimeout(() => setShowVideo(true), 600);
@@ -452,6 +470,10 @@ function HeroTrailer({ src }: { src: string }) {
     return () => {
       cancelled = true;
       trailerReadyListeners.delete(onReady);
+      if (canPlayTimerRef.current) {
+        clearTimeout(canPlayTimerRef.current);
+        canPlayTimerRef.current = null;
+      }
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };

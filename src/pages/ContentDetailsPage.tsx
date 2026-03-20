@@ -177,7 +177,7 @@ export default function ContentDetailsPage() {
 
         <div className="relative w-full overflow-hidden" style={{ height: '60vh' }}>
           {trailerUrl ? (
-            <HeroTrailer src={trailerUrl} cover={coverImg} />
+            <HeroTrailer src={trailerUrl} />
           ) : heroBg ? (
             <img
               src={heroBg}
@@ -190,24 +190,30 @@ export default function ContentDetailsPage() {
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
 
           <div className="relative z-10 flex h-full items-end px-12 pb-16 pt-32">
-            <div className="max-w-2xl">
-              <h1 className="mb-4 text-4xl font-semibold text-white md:text-5xl">
-                {content.title}
-              </h1>
-              {content.content_type && (
-                <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
-                  {content.content_type}
-                </span>
-              )}
-              {drmError && (
-                <p className="mb-2 text-sm text-red-400">{drmError}</p>
-              )}
-              <DetailActions>
-                {hasPlayableContent && (
-                  <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
+            <div className="flex flex-1 items-center">
+              <div className="max-w-2xl">
+                <h1 className="mb-4 text-4xl font-semibold text-white md:text-5xl">
+                  {content.title}
+                </h1>
+                {content.content_type && (
+                  <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
+                    {content.content_type}
+                  </span>
                 )}
-                <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
-              </DetailActions>
+                {drmError && (
+                  <p className="mb-2 text-sm text-red-400">{drmError}</p>
+                )}
+                <DetailActions>
+                  {hasPlayableContent && (
+                    <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
+                  )}
+                  <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
+                </DetailActions>
+              </div>
+
+              {trailerUrl && coverImg && (
+                <HeroCover src={coverImg} trailerUrl={trailerUrl} />
+              )}
             </div>
           </div>
         </div>
@@ -297,25 +303,31 @@ function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
   );
 }
 
-function HeroTrailer({ src, cover }: { src: string; cover: string | null }) {
+let heroTrailerReady = false;
+const trailerReadyListeners = new Set<() => void>();
+
+function notifyTrailerReady() {
+  heroTrailerReady = true;
+  for (const fn of trailerReadyListeners) fn();
+}
+
+function HeroTrailer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
-  const [videoReady, setVideoReady] = useState(false);
-  const [coverHidden, setCoverHidden] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
 
   const handleCanPlay = useCallback(() => {
-    setVideoReady(true);
+    notifyTrailerReady();
   }, []);
 
   useEffect(() => {
-    if (!videoReady) return;
-    setCoverHidden(true);
-    const timer = setTimeout(() => setShowVideo(true), 600);
-    return () => clearTimeout(timer);
-  }, [videoReady]);
+    heroTrailerReady = false;
 
-  useEffect(() => {
+    const onReady = () => {
+      setTimeout(() => setShowVideo(true), 600);
+    };
+    trailerReadyListeners.add(onReady);
+
     const video = videoRef.current;
     if (!video || !src) return;
 
@@ -351,64 +363,73 @@ function HeroTrailer({ src, cover }: { src: string; cover: string | null }) {
 
     return () => {
       cancelled = true;
+      trailerReadyListeners.delete(onReady);
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
   }, [src]);
 
   return (
-    <>
-      {cover && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: '50%',
-            right: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1,
-            pointerEvents: 'none',
-            opacity: coverHidden ? 0 : 1,
-            transition: 'opacity 500ms ease-out',
-          }}
-        >
-          <img
-            src={cover}
-            alt=""
-            decoding="async"
-            style={{
-              maxHeight: '75%',
-              width: 'auto',
-              objectFit: 'contain',
-              borderRadius: '0.75rem',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-            }}
-          />
-        </div>
-      )}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        onCanPlay={handleCanPlay}
+    <video
+      ref={videoRef}
+      autoPlay
+      muted
+      loop
+      playsInline
+      onCanPlay={handleCanPlay}
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        minWidth: '100%',
+        minHeight: '100%',
+        width: 'auto',
+        height: 'auto',
+        transform: 'translate(-50%, -50%)',
+        opacity: showVideo ? 1 : 0,
+        transition: 'opacity 800ms ease-out',
+      }}
+    />
+  );
+}
+
+function HeroCover({ src, trailerUrl }: { src: string; trailerUrl: string }) {
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    if (heroTrailerReady) {
+      setHidden(true);
+      return;
+    }
+    const onReady = () => setHidden(true);
+    trailerReadyListeners.add(onReady);
+    return () => { trailerReadyListeners.delete(onReady); };
+  }, [trailerUrl]);
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        pointerEvents: 'none',
+        opacity: hidden ? 0 : 1,
+        transition: 'opacity 500ms ease-out',
+      }}
+    >
+      <img
+        src={src}
+        alt=""
+        decoding="async"
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          minWidth: '100%',
-          minHeight: '100%',
+          maxHeight: '40vh',
           width: 'auto',
-          height: 'auto',
-          transform: 'translate(-50%, -50%)',
-          opacity: showVideo ? 1 : 0,
-          transition: 'opacity 800ms ease-out',
+          objectFit: 'contain',
+          borderRadius: '0.75rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
         }}
       />
-    </>
+    </div>
   );
 }

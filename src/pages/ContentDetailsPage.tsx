@@ -534,7 +534,6 @@ function HeroTrailer({ src }: { src: string }) {
         muted
         loop
         playsInline
-        // @ts-expect-error legacy WebKit
         webkit-playsinline=""
         onCanPlay={scheduleTrailerReveal}
         onLoadedData={scheduleTrailerReveal}

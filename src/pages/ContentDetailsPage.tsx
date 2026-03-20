@@ -217,11 +217,11 @@ export default function ContentDetailsPage() {
           ) : null}
           {trailerUrl ? <HeroTrailer src={trailerUrl} /> : null}
           <div
-            className="pointer-events-none absolute inset-0 z-[2] min-h-full"
+            className="pointer-events-none absolute inset-0 z-[6] min-h-full"
             style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }}
           />
           <div
-            className="pointer-events-none absolute inset-0 z-[2] min-h-full"
+            className="pointer-events-none absolute inset-0 z-[6] min-h-full"
             style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }}
           />
 
@@ -522,10 +522,10 @@ function HeroTrailer({ src }: { src: string }) {
       style={{
         position: 'absolute',
         inset: 0,
-        zIndex: 1,
-        minHeight: '100%',
-        overflow: 'hidden',
+        zIndex: 5,
         pointerEvents: 'none',
+        opacity: showVideo ? 1 : 0,
+        transition: 'opacity 800ms ease-out',
       }}
     >
       <video
@@ -541,15 +541,10 @@ function HeroTrailer({ src }: { src: string }) {
         onPlaying={scheduleTrailerReveal}
         style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          minWidth: '100%',
-          minHeight: '100%',
-          width: 'auto',
-          height: 'auto',
-          transform: 'translate(-50%, -50%)',
-          opacity: showVideo ? 1 : 0,
-          transition: 'opacity 800ms ease-out',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
         }}
       />
     </div>

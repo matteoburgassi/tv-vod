@@ -359,25 +359,35 @@ function HeroTrailer({ src, cover }: { src: string; cover: string | null }) {
   return (
     <>
       {cover && (
-        <img
-          src={cover}
-          alt=""
-          decoding="async"
+        <div
           style={{
             position: 'absolute',
-            top: '50%',
-            right: '8%',
-            transform: 'translateY(-50%)',
-            height: '75%',
-            width: 'auto',
-            objectFit: 'contain',
-            borderRadius: '0.75rem',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            top: 0,
+            bottom: 0,
+            left: '50%',
+            right: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+            pointerEvents: 'none',
             opacity: coverHidden ? 0 : 1,
             transition: 'opacity 500ms ease-out',
-            zIndex: 1,
           }}
-        />
+        >
+          <img
+            src={cover}
+            alt=""
+            decoding="async"
+            style={{
+              maxHeight: '75%',
+              width: 'auto',
+              objectFit: 'contain',
+              borderRadius: '0.75rem',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            }}
+          />
+        </div>
       )}
       <video
         ref={videoRef}

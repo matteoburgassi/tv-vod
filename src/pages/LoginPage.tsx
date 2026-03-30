@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { loginWithEmail, requestDeviceCode, pollDeviceCode, PAIR_URL_BASE, POLL_INTERVAL } from 'tv-vod-auth';
+import { requestDeviceCode, pollDeviceCode, PAIR_URL_BASE, POLL_INTERVAL } from 'tv-vod-auth';
 import QRCode from '../components/QRCode';
 import { isTV } from '../utils/platformInit';
 
@@ -14,11 +14,7 @@ export default function LoginPage() {
   const location = useLocation();
   const returnTo = (location.state as { returnTo?: string })?.returnTo ?? '/';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
   const [deviceCode, setDeviceCode] = useState<string | null>(null);
   const [codeExpired, setCodeExpired] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -70,37 +66,20 @@ export default function LoginPage() {
   }, [stopPolling, login, navigate, returnTo]);
 
   useEffect(() => {
-    if (tv) {
-      requestCode();
-    }
+    requestCode();
     return stopPolling;
   }, []);
 
   useEffect(() => {
     if (tv) {
       setFocus('login-refresh');
-    } else {
-      setFocus('login-email');
     }
   }, []);
 
-  const handleLogin = useCallback(async () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password');
-      return;
-    }
-    setError('');
-    setLoading(true);
-    try {
-      const user = await loginWithEmail(email, password);
-      login(user);
-      navigate(returnTo, { replace: true, state: { loginSuccess: true } });
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  }, [email, password, login, navigate, returnTo]);
+  const handleSkip = useCallback(() => {
+    login({ id: 'guest', subscribed: false });
+    navigate(returnTo, { replace: true });
+  }, [login, navigate, returnTo]);
 
   if (tv) {
     return (
@@ -111,7 +90,7 @@ export default function LoginPage() {
             expired={codeExpired}
             error={error}
             onRefresh={requestCode}
-            returnTo={returnTo}
+            onSkip={handleSkip}
           />
         </div>
       </FocusContext.Provider>
@@ -121,38 +100,99 @@ export default function LoginPage() {
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
-        <div className="w-full max-w-lg px-8">
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
-            <p className="mt-3 text-lg text-white/50">Sign in to your account</p>
-          </div>
-          <div className="space-y-6">
-            <NativeInput
-              focusKey="login-email"
-              label="Email"
-              type="email"
-              value={email}
-              placeholder="your@email.com"
-              nextFocus="login-password"
-              onChange={setEmail}
-            />
-            <NativeInput
-              focusKey="login-password"
-              label="Password"
-              type="password"
-              value={password}
-              placeholder="••••••••"
-              prevFocus="login-email"
-              nextFocus="login-submit"
-              onChange={setPassword}
-            />
-            {error && <ErrorBanner message={error} />}
-            <LoginButton loading={loading} onPress={handleLogin} />
-            <SkipButton returnTo={returnTo} />
-          </div>
-        </div>
+        <BrowserQRLogin
+          code={deviceCode}
+          expired={codeExpired}
+          error={error}
+          onRefresh={requestCode}
+          onSkip={handleSkip}
+        />
       </div>
     </FocusContext.Provider>
+  );
+}
+
+/* ---------- Browser QR Login ---------- */
+
+function BrowserQRLogin({
+  code,
+  expired,
+  error,
+  onRefresh,
+  onSkip,
+}: {
+  code: string | null;
+  expired: boolean;
+  error: string;
+  onRefresh: () => void;
+  onSkip: () => void;
+}) {
+  const pairUrl = code ? `${PAIR_URL_BASE}?code=${code}` : '';
+
+  return (
+    <div className="w-full max-w-md px-6">
+      <div className="mb-10 text-center">
+        <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
+        <p className="mt-3 text-lg text-white/50">Sign in to your account</p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+        <div className="flex justify-center">
+          {code && !expired ? (
+            <div className="rounded-xl bg-white p-3">
+              <QRCode value={pairUrl} size={200} />
+            </div>
+          ) : (
+            <div className="flex h-[224px] w-[224px] items-center justify-center rounded-xl bg-white/10">
+              <span className="text-sm text-white/30">
+                {expired ? 'Code expired' : 'Loading...'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-white/60">
+            Scan the QR code with your phone to sign in
+          </p>
+
+          {code && !expired && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs text-white/40">Or enter this code manually</p>
+              <div className="inline-block rounded-lg bg-white/10 px-6 py-3">
+                <span className="font-mono text-2xl font-bold tracking-[0.3em] text-white">
+                  {code}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-white/40">
+                at <span className="font-medium text-white/60">tv-vod.blast.dvbuilder.com/#/pair</span>
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            onClick={onRefresh}
+            className="w-full rounded-xl bg-white/10 py-3 text-sm font-medium text-white transition-colors hover:bg-white/20"
+          >
+            {expired ? 'Get New Code' : 'Refresh Code'}
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full rounded-xl py-3 text-sm text-white/40 transition-colors hover:text-white/60"
+          >
+            Continue as Guest
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -163,13 +203,13 @@ function TVQRLogin({
   expired,
   error,
   onRefresh,
-  returnTo,
+  onSkip,
 }: {
   code: string | null;
   expired: boolean;
   error: string;
   onRefresh: () => void;
-  returnTo: string;
+  onSkip: () => void;
 }) {
   const pairUrl = code ? `${PAIR_URL_BASE}?code=${code}` : '';
 
@@ -206,7 +246,11 @@ function TVQRLogin({
           </div>
         )}
 
-        {error && <ErrorBanner message={error} />}
+        {error && (
+          <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
         <div className="mt-[1vw] flex gap-[1vw]">
           <FocusableActionButton
@@ -218,7 +262,7 @@ function TVQRLogin({
         </div>
 
         <div className="mt-[1vw]">
-          <TVSkipButton returnTo={returnTo} prevFocus="login-refresh" />
+          <TVSkipButton onSkip={onSkip} prevFocus="login-refresh" />
         </div>
       </div>
     </div>
@@ -226,14 +270,6 @@ function TVQRLogin({
 }
 
 /* ---------- Shared Components ---------- */
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg bg-red-900/40 px-4 py-3 text-sm text-red-300">
-      {message}
-    </div>
-  );
-}
 
 function FocusableActionButton({
   focusKey,
@@ -281,103 +317,10 @@ function FocusableActionButton({
   );
 }
 
-function NativeInput({
-  focusKey,
-  label,
-  type,
-  value,
-  placeholder,
-  prevFocus,
-  nextFocus,
-  onChange,
-}: {
-  focusKey: string;
-  label: string;
-  type: string;
-  value: string;
-  placeholder: string;
-  prevFocus?: string;
-  nextFocus?: string;
-  onChange: (v: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const { ref, focused } = useFocusable({
-    focusKey,
-    onEnterPress: () => inputRef.current?.focus(),
-    onArrowPress: (direction: string) => {
-      if (direction === 'down' && nextFocus) { setFocus(nextFocus); return false; }
-      if (direction === 'up' && prevFocus) { setFocus(prevFocus); return false; }
-      return true;
-    },
-  });
-
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-white/70">{label}</label>
-      <div
-        ref={ref}
-        className={`rounded-xl border-2 transition-all ${
-          focused
-            ? 'border-white/60 bg-white/10 shadow-lg shadow-white/5'
-            : 'border-white/10 bg-white/5'
-        }`}
-      >
-        <input
-          ref={inputRef}
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              inputRef.current?.blur();
-              if (nextFocus) setFocus(nextFocus);
-            }
-          }}
-          className="w-full bg-transparent px-5 py-4 text-lg text-white placeholder-white/30 outline-none"
-        />
-      </div>
-    </div>
-  );
-}
-
-function LoginButton({ loading, onPress }: { loading: boolean; onPress: () => void }) {
-  const { ref, focused } = useFocusable({
-    focusKey: 'login-submit',
-    onEnterPress: onPress,
-    onArrowPress: (direction: string) => {
-      if (direction === 'up') { setFocus('login-password'); return false; }
-      if (direction === 'down') { setFocus('login-qr-switch'); return false; }
-      return false;
-    },
-  });
-
-  return (
-    <button
-      ref={ref}
-      onClick={onPress}
-      disabled={loading}
-      className={`w-full rounded-xl py-4 text-lg font-semibold transition-all ${
-        focused
-          ? 'bg-white text-black shadow-lg shadow-white/20 scale-[1.02]'
-          : 'bg-white/20 text-white hover:bg-white/30'
-      } ${loading ? 'opacity-60' : ''}`}
-    >
-      {loading ? 'Signing in...' : 'Sign In'}
-    </button>
-  );
-}
-
-function TVSkipButton({ returnTo, prevFocus }: { returnTo: string; prevFocus?: string }) {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+function TVSkipButton({ onSkip, prevFocus }: { onSkip: () => void; prevFocus?: string }) {
   const { ref, focused } = useFocusable({
     focusKey: 'login-skip',
-    onEnterPress: () => {
-      login({ id: 'guest', subscribed: false });
-      navigate(returnTo, { replace: true });
-    },
+    onEnterPress: onSkip,
     onArrowPress: (direction: string) => {
       if (direction === 'up' && prevFocus) { setFocus(prevFocus); return false; }
       return false;
@@ -387,33 +330,7 @@ function TVSkipButton({ returnTo, prevFocus }: { returnTo: string; prevFocus?: s
   return (
     <button
       ref={ref}
-      className={`w-full rounded-xl py-3 text-sm transition-all ${
-        focused ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'
-      }`}
-    >
-      Continue as Guest
-    </button>
-  );
-}
-
-function SkipButton({ returnTo }: { returnTo: string }) {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const { ref, focused } = useFocusable({
-    focusKey: 'login-skip',
-    onEnterPress: () => {
-      login({ id: 'guest', subscribed: false });
-      navigate(returnTo, { replace: true });
-    },
-    onArrowPress: (direction: string) => {
-      if (direction === 'up') { setFocus('login-submit'); return false; }
-      return false;
-    },
-  });
-
-  return (
-    <button
-      ref={ref}
+      onClick={onSkip}
       className={`w-full rounded-xl py-3 text-sm transition-all ${
         focused ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'
       }`}

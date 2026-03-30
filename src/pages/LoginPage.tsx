@@ -3,12 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { loginWithEmail, requestDeviceCode, pollDeviceCode, PAIR_URL_BASE, POLL_INTERVAL } from 'tv-vod-auth';
-import TVKeyboard from '../components/TVKeyboard';
 import QRCode from '../components/QRCode';
 import { isTV } from '../utils/platformInit';
-
-type ActiveField = 'email' | 'password' | null;
-type TVLoginMode = 'qr' | 'keyboard';
 
 const tv = isTV();
 
@@ -18,12 +14,10 @@ export default function LoginPage() {
   const location = useLocation();
   const returnTo = (location.state as { returnTo?: string })?.returnTo ?? '/';
 
-  const [tvMode, setTvMode] = useState<TVLoginMode>('qr');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeField, setActiveField] = useState<ActiveField>(null);
 
   const [deviceCode, setDeviceCode] = useState<string | null>(null);
   const [codeExpired, setCodeExpired] = useState(false);
@@ -76,19 +70,19 @@ export default function LoginPage() {
   }, [stopPolling, login, navigate, returnTo]);
 
   useEffect(() => {
-    if (tv && tvMode === 'qr') {
+    if (tv) {
       requestCode();
     }
     return stopPolling;
-  }, [tv, tvMode]);
+  }, []);
 
   useEffect(() => {
     if (tv) {
-      setFocus(tvMode === 'qr' ? 'login-refresh' : 'login-email');
+      setFocus('login-refresh');
     } else {
       setFocus('login-email');
     }
-  }, [tvMode]);
+  }, []);
 
   const handleLogin = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -108,78 +102,19 @@ export default function LoginPage() {
     }
   }, [email, password, login, navigate, returnTo]);
 
-  const openKeyboard = useCallback((field: ActiveField) => setActiveField(field), []);
-
-  const closeKeyboard = useCallback(() => {
-    const field = activeField;
-    setActiveField(null);
-    setTimeout(() => {
-      if (field === 'email') setFocus('login-email');
-      else if (field === 'password') setFocus('login-password');
-    }, 100);
-  }, [activeField]);
-
-  const handleKeyboardDone = useCallback(
-    (value: string) => {
-      if (activeField === 'email') setEmail(value);
-      else if (activeField === 'password') setPassword(value);
-      closeKeyboard();
-    },
-    [activeField, closeKeyboard],
-  );
-
-  const handleKeyboardNext = useCallback(
-    (value: string) => {
-      if (activeField === 'email') {
-        setEmail(value);
-        setActiveField(null);
-        setTimeout(() => setActiveField('password'), 150);
-      }
-    },
-    [activeField],
-  );
-
   if (tv) {
     return (
-      <>
-        <FocusContext.Provider value={focusKey}>
-          <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
-            {tvMode === 'qr' ? (
-              <TVQRLogin
-                code={deviceCode}
-                expired={codeExpired}
-                error={error}
-                onRefresh={requestCode}
-                onSwitchToKeyboard={() => setTvMode('keyboard')}
-                returnTo={returnTo}
-              />
-            ) : (
-              <TVKeyboardLogin
-                email={email}
-                password={password}
-                error={error}
-                loading={loading}
-                onOpenKeyboard={openKeyboard}
-                onLogin={handleLogin}
-                onSwitchToQR={() => setTvMode('qr')}
-                returnTo={returnTo}
-              />
-            )}
-          </div>
-        </FocusContext.Provider>
-
-        {tvMode === 'keyboard' && activeField && (
-          <TVKeyboard
-            value={activeField === 'email' ? email : password}
-            label={activeField === 'email' ? 'Email' : 'Password'}
-            masked={activeField === 'password'}
-            onChanged={activeField === 'email' ? setEmail : setPassword}
-            onSubmit={handleKeyboardDone}
-            onNext={activeField === 'email' ? handleKeyboardNext : undefined}
-            onCancel={closeKeyboard}
+      <FocusContext.Provider value={focusKey}>
+        <div ref={ref} className="flex min-h-screen items-center justify-center bg-[#120818]">
+          <TVQRLogin
+            code={deviceCode}
+            expired={codeExpired}
+            error={error}
+            onRefresh={requestCode}
+            returnTo={returnTo}
           />
-        )}
-      </>
+        </div>
+      </FocusContext.Provider>
     );
   }
 
@@ -228,14 +163,12 @@ function TVQRLogin({
   expired,
   error,
   onRefresh,
-  onSwitchToKeyboard,
   returnTo,
 }: {
   code: string | null;
   expired: boolean;
   error: string;
   onRefresh: () => void;
-  onSwitchToKeyboard: () => void;
   returnTo: string;
 }) {
   const pairUrl = code ? `${PAIR_URL_BASE}?code=${code}` : '';
@@ -280,84 +213,13 @@ function TVQRLogin({
             focusKey="login-refresh"
             label={expired ? 'Get New Code' : 'Refresh Code'}
             onPress={onRefresh}
-            nextFocus="login-keyboard-switch"
-          />
-          <FocusableActionButton
-            focusKey="login-keyboard-switch"
-            label="Sign in with keyboard"
-            onPress={onSwitchToKeyboard}
-            secondary
-            prevFocus="login-refresh"
             nextFocus="login-skip"
           />
         </div>
 
         <div className="mt-[1vw]">
-          <TVSkipButton returnTo={returnTo} prevFocus="login-keyboard-switch" />
+          <TVSkipButton returnTo={returnTo} prevFocus="login-refresh" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- TV Keyboard Login ---------- */
-
-function TVKeyboardLogin({
-  email,
-  password,
-  error,
-  loading,
-  onOpenKeyboard,
-  onLogin,
-  onSwitchToQR,
-  returnTo,
-}: {
-  email: string;
-  password: string;
-  error: string;
-  loading: boolean;
-  onOpenKeyboard: (field: ActiveField) => void;
-  onLogin: () => void;
-  onSwitchToQR: () => void;
-  returnTo: string;
-}) {
-  return (
-    <div className="w-full max-w-lg px-8">
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-white">PlayVOD</h1>
-        <p className="mt-3 text-lg text-white/50">Sign in with keyboard</p>
-      </div>
-      <div className="space-y-6">
-        <TVFocusableInput
-          focusKey="login-email"
-          label="Email"
-          type="email"
-          value={email}
-          placeholder="your@email.com"
-          nextFocus="login-password"
-          onRequestKeyboard={() => onOpenKeyboard('email')}
-        />
-        <TVFocusableInput
-          focusKey="login-password"
-          label="Password"
-          type="password"
-          value={password}
-          placeholder="••••••••"
-          prevFocus="login-email"
-          nextFocus="login-submit"
-          onRequestKeyboard={() => onOpenKeyboard('password')}
-        />
-        {error && <ErrorBanner message={error} />}
-        <LoginButton loading={loading} onPress={onLogin} />
-        <FocusableActionButton
-          focusKey="login-qr-switch"
-          label="Sign in with QR code"
-          onPress={onSwitchToQR}
-          secondary
-          prevFocus="login-submit"
-          nextFocus="login-skip"
-        />
-        <TVSkipButton returnTo={returnTo} prevFocus="login-qr-switch" />
       </div>
     </div>
   );
@@ -416,59 +278,6 @@ function FocusableActionButton({
     >
       {label}
     </button>
-  );
-}
-
-function TVFocusableInput({
-  focusKey,
-  label,
-  type,
-  value,
-  placeholder,
-  prevFocus,
-  nextFocus,
-  onRequestKeyboard,
-}: {
-  focusKey: string;
-  label: string;
-  type: string;
-  value: string;
-  placeholder: string;
-  prevFocus?: string;
-  nextFocus?: string;
-  onRequestKeyboard?: () => void;
-}) {
-  const { ref, focused } = useFocusable({
-    focusKey,
-    onEnterPress: () => onRequestKeyboard?.(),
-    onArrowPress: (direction: string) => {
-      if (direction === 'down' && nextFocus) { setFocus(nextFocus); return false; }
-      if (direction === 'up' && prevFocus) { setFocus(prevFocus); return false; }
-      return true;
-    },
-  });
-
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-white/70">{label}</label>
-      <div
-        ref={ref}
-        className={`rounded-xl border-2 transition-all ${
-          focused
-            ? 'border-white/60 bg-white/10 shadow-lg shadow-white/5'
-            : 'border-white/10 bg-white/5'
-        }`}
-      >
-        <div className="flex items-center px-5 py-4">
-          <span className={`text-lg ${value ? 'text-white' : 'text-white/30'}`}>
-            {value ? (type === 'password' ? '•'.repeat(value.length) : value) : placeholder}
-          </span>
-          {focused && (
-            <span className="ml-0.5 inline-block h-6 w-0.5 animate-pulse bg-white" />
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 

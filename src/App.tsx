@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { init, useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { AuthProvider } from './contexts/AuthContext';
@@ -27,9 +27,40 @@ document.addEventListener('keydown', (e) => {
   }
 }, true);
 
+const HEADER_SAFE_EXTRA_PX = 28;
+
 function AppLayout() {
   const location = useLocation();
   const [showLoginToast, setShowLoginToast] = useState(false);
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const scrollEl = document.getElementById('page-scroll-container');
+
+    const syncHeaderSafe = () => {
+      const header = document.querySelector('header');
+      const h = header
+        ? Math.ceil(header.getBoundingClientRect().height) + HEADER_SAFE_EXTRA_PX
+        : 160;
+      root.style.setProperty('--header-safe', `${h}px`);
+      if (scrollEl) {
+        scrollEl.style.scrollPaddingTop = `${h}px`;
+      }
+    };
+
+    syncHeaderSafe();
+    window.addEventListener('resize', syncHeaderSafe);
+    const t = window.setTimeout(syncHeaderSafe, 0);
+    const t2 = window.setTimeout(syncHeaderSafe, 400);
+
+    return () => {
+      window.removeEventListener('resize', syncHeaderSafe);
+      window.clearTimeout(t);
+      window.clearTimeout(t2);
+      root.style.removeProperty('--header-safe');
+      if (scrollEl) scrollEl.style.removeProperty('scroll-padding-top');
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if ((location.state as { loginSuccess?: boolean })?.loginSuccess) {

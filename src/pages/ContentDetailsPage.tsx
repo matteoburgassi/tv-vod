@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFocusable, FocusContext, setFocus } from '@noriginmedia/norigin-spatial-navigation';
 import { mapKeyEvent } from '../utils/keyMap';
@@ -8,8 +8,9 @@ import type { DrmConfig } from '@digitalvirgo/drm-player';
 import { useAuth } from '../contexts/AuthContext';
 import { RELATED_RUBRIC_ID } from '../constants/api';
 import type { ContentItem, RubricItem } from '../types/api';
-import { getArtBackground, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
+import { getArtBackground, getCoverImage, getStreamUrl, getMainStreamUrl, getMainDeliveryDrm, sizedUrl } from '../utils/assets';
 import { resolveBestHlsStream } from '../utils/hlsUtils';
+import { isTV } from '../utils/platformInit';
 import VideoPlayer from '../components/VideoPlayer';
 import ContentRow from '../components/ContentRow';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -19,10 +20,21 @@ interface RelatedRow {
   items: ContentItem[];
 }
 
+const HEADER_SPACER_EXTRA_PX = 28;
+/** Extra air below the fixed top bar on detail (trailer stays full-bleed). */
+const DETAIL_TOP_GAP_MULTIPLIER = 2;
+
+function measureHeaderSafePx(): number {
+  const el = document.querySelector('header');
+  if (!el) return 160;
+  return Math.ceil(el.getBoundingClientRect().height) + HEADER_SPACER_EXTRA_PX;
+}
+
 export default function ContentDetailsPage() {
   const { contentId } = useParams<{ contentId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [headerSpacerPx, setHeaderSpacerPx] = useState(160 * DETAIL_TOP_GAP_MULTIPLIER);
   const [content, setContent] = useState<ContentItem | null>(null);
   const [related, setRelated] = useState<RelatedRow[]>([]);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -31,7 +43,7 @@ export default function ContentDetailsPage() {
   const [drmError, setDrmError] = useState<string | null>(null);
   const [playerUrl, setPlayerUrl] = useState<string | null>(null);
   const [drmConfig, setDrmConfig] = useState<DrmConfig | undefined>();
-  const { ref, focusKey, focusSelf } = useFocusable({});
+  const { ref, focusKey } = useFocusable({});
 
   useEffect(() => {
     let cancelled = false;
@@ -72,9 +84,27 @@ export default function ContentDetailsPage() {
     return () => { cancelled = true; };
   }, [contentId]);
 
+  useLayoutEffect(() => {
+    const sync = () => setHeaderSpacerPx(measureHeaderSafePx() * DETAIL_TOP_GAP_MULTIPLIER);
+    sync();
+    window.addEventListener('resize', sync);
+    const t = window.setTimeout(sync, 0);
+    const t2 = window.setTimeout(sync, 450);
+    return () => {
+      window.removeEventListener('resize', sync);
+      window.clearTimeout(t);
+      window.clearTimeout(t2);
+    };
+  }, []);
+
   useEffect(() => {
-    if (!loading) focusSelf();
-  }, [loading, focusSelf]);
+    if (!loading) {
+      window.requestAnimationFrame(() => {
+        setHeaderSpacerPx(measureHeaderSafePx() * DETAIL_TOP_GAP_MULTIPLIER);
+        setFocus('detail-actions');
+      });
+    }
+  }, [loading]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -156,6 +186,9 @@ export default function ContentDetailsPage() {
   const rawBg = getArtBackground(content.assets);
   const heroBg = rawBg ? sizedUrl(rawBg, window.innerWidth, Math.round(window.innerHeight * 0.6)) : null;
   const playerPoster = rawBg ? sizedUrl(rawBg, window.innerWidth, window.innerHeight) : null;
+  const rawCover = getCoverImage(content.assets);
+  const vw = window.innerWidth / 100;
+  const coverImg = rawCover ? sizedUrl(rawCover, 20 * vw, 28 * vw) : null;
   const trailerUrl = getStreamUrl(content.deliveries);
   const mainUrl = getMainStreamUrl(content.deliveries);
   const hasPlayableContent = !!(mainUrl || trailerUrl);
@@ -181,38 +214,86 @@ export default function ContentDetailsPage() {
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
               decoding="async"
+              fetchPriority="high"
             />
           ) : null}
-          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }} />
-          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }} />
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: 'linear-gradient(to top, #120818, rgba(18,8,24,0.5) 50%, rgba(18,8,24,0.3))' }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: 'linear-gradient(to right, rgba(18,8,24,0.8), transparent 50%, transparent)' }}
+          />
 
-          <div className="relative z-10 flex min-h-[60vh] items-end px-12 pb-16 pt-32">
-            <div className="max-w-2xl">
-              <h1 className="mb-4 text-4xl font-semibold text-white md:text-5xl">
-                {content.title}
-              </h1>
-              {content.content_type && (
-                <span className="mb-4 inline-block rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
-                  {content.content_type}
-                </span>
-              )}
-              {drmError && (
-                <p className="mb-2 text-sm text-red-400">{drmError}</p>
-              )}
-              <DetailActions>
-                {hasPlayableContent && (
-                  <PlayButton onPress={handlePlay} loading={drmLoading} onArrowPress={handleArrowPress} />
+          <div className="relative z-10 w-full px-12 pb-16">
+            <div
+              className="w-full shrink-0"
+              style={{ minHeight: headerSpacerPx }}
+              aria-hidden
+            />
+            <div className="flex w-full flex-row items-stretch gap-8">
+              <div className="flex min-w-0 flex-1 flex-col items-start justify-start gap-4 text-left">
+                <h1 className="max-w-2xl break-words text-4xl leading-tight font-semibold text-white md:text-5xl md:leading-tight">
+                  {content.title}
+                </h1>
+                {content.content_type && (
+                  <span className="w-fit self-start rounded bg-white/15 px-3 py-1 text-sm text-white/80 backdrop-blur-sm">
+                    {content.content_type}
+                  </span>
                 )}
-                <BackButton onPress={() => navigate(-1)} onArrowPress={handleArrowPress} />
-              </DetailActions>
+                {content.description && (
+                  <p className="max-w-2xl text-lg leading-relaxed text-white/70">
+                    {content.description}
+                  </p>
+                )}
+                {drmError && (
+                  <p className="text-sm text-red-400">{drmError}</p>
+                )}
+                <DetailActions>
+                  {hasPlayableContent && (
+                    <PlayButton
+                      onPress={handlePlay}
+                      loading={drmLoading}
+                      onArrowPress={handleArrowPress}
+                      focusKey="detail-play"
+                      arrowRightFocusKey="detail-back"
+                    />
+                  )}
+                  <BackButton
+                    onPress={() => navigate(-1)}
+                    onArrowPress={handleArrowPress}
+                    focusKey="detail-back"
+                    arrowLeftFocusKey={hasPlayableContent ? 'detail-play' : undefined}
+                  />
+                </DetailActions>
+              </div>
+
+              {coverImg ? (
+                <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
+                  {trailerUrl ? (
+                    <HeroCover src={coverImg} />
+                  ) : (
+                    <img
+                      src={coverImg}
+                      alt=""
+                      decoding="async"
+                      fetchPriority="high"
+                      style={{
+                        maxHeight: '40vh',
+                        maxWidth: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: '0.75rem',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+                      }}
+                    />
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
-        </div>
-
-        <div className="relative z-10 -mt-8 px-12 pb-8">
-          <p className="max-w-3xl text-lg leading-relaxed text-white/70">
-            {content.description}
-          </p>
         </div>
 
         <div className="relative z-10 pb-20">
@@ -245,8 +326,30 @@ function DetailActions({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; loading?: boolean; onArrowPress?: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: loading ? undefined : onPress, onArrowPress });
+function PlayButton({
+  onPress,
+  loading,
+  onArrowPress,
+  focusKey,
+  arrowRightFocusKey,
+}: {
+  onPress: () => void;
+  loading?: boolean;
+  onArrowPress?: (direction: string) => boolean;
+  focusKey?: string;
+  arrowRightFocusKey?: string;
+}) {
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: loading ? undefined : onPress,
+    onArrowPress: (direction: string) => {
+      if (direction === 'right' && arrowRightFocusKey) {
+        setFocus(arrowRightFocusKey);
+        return false;
+      }
+      return onArrowPress?.(direction) ?? true;
+    },
+  });
 
   return (
     <button
@@ -275,8 +378,28 @@ function PlayButton({ onPress, loading, onArrowPress }: { onPress: () => void; l
   );
 }
 
-function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPress?: (direction: string) => boolean }) {
-  const { ref, focused } = useFocusable({ onEnterPress: onPress, onArrowPress });
+function BackButton({
+  onPress,
+  onArrowPress,
+  focusKey,
+  arrowLeftFocusKey,
+}: {
+  onPress: () => void;
+  onArrowPress?: (direction: string) => boolean;
+  focusKey?: string;
+  arrowLeftFocusKey?: string;
+}) {
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: onPress,
+    onArrowPress: (direction: string) => {
+      if (direction === 'left' && arrowLeftFocusKey) {
+        setFocus(arrowLeftFocusKey);
+        return false;
+      }
+      return onArrowPress?.(direction) ?? true;
+    },
+  });
 
   return (
     <button
@@ -294,6 +417,45 @@ function BackButton({ onPress, onArrowPress }: { onPress: () => void; onArrowPre
   );
 }
 
+let heroTrailerReady = false;
+const trailerReadyListeners = new Set<() => void>();
+
+function notifyTrailerReady() {
+  heroTrailerReady = true;
+  for (const fn of trailerReadyListeners) fn();
+}
+
+function HeroCover({ src }: { src: string }) {
+  const [hidden, setHidden] = useState(() => heroTrailerReady);
+
+  useEffect(() => {
+    if (heroTrailerReady) { setHidden(true); return; }
+    const onReady = () => setHidden(true);
+    trailerReadyListeners.add(onReady);
+    return () => { trailerReadyListeners.delete(onReady); };
+  }, []);
+
+  return (
+    <img
+      src={src}
+      alt=""
+      decoding="async"
+      fetchPriority="high"
+      style={{
+        maxHeight: '40vh',
+        maxWidth: '100%',
+        width: 'auto',
+        height: 'auto',
+        objectFit: 'contain',
+        borderRadius: '0.75rem',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        opacity: hidden ? 0 : 1,
+        transition: 'opacity 500ms ease-out',
+      }}
+    />
+  );
+}
+
 function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<import('hls.js').default | null>(null);
@@ -301,40 +463,56 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
 
   const handleCanPlay = useCallback(() => {
     setLoaded(true);
+    notifyTrailerReady();
   }, []);
 
   useEffect(() => {
+    heroTrailerReady = false;
     const video = videoRef.current;
     if (!video || !src) return;
 
     let cancelled = false;
     const isHls = src.includes('.m3u8');
 
+    const tryPlay = () => { video.play().catch(() => {}); };
+
     if (isHls) {
       const setup = async () => {
-        const bestStream = await resolveBestHlsStream(src);
+        let bestStream = src;
+        try { bestStream = await resolveBestHlsStream(src); } catch { /* use master */ }
         if (cancelled) return;
 
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        if (video.canPlayType('application/vnd.apple.mpegurl') ||
+            video.canPlayType('application/x-mpegURL')) {
           video.src = bestStream;
-          video.play().catch(() => {});
+          tryPlay();
           return;
         }
 
-        const { default: Hls } = await import('hls.js');
-        if (cancelled || !Hls.isSupported()) return;
+        try {
+          const { default: Hls } = await import('hls.js');
+          if (cancelled) return;
 
-        const hls = new Hls();
-        hlsRef.current = hls;
-        hls.loadSource(bestStream);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => {});
-        });
+          if (Hls.isSupported()) {
+            const hlsConfig: Partial<import('hls.js').HlsConfig> = isTV()
+              ? { maxBufferLength: 12, maxMaxBufferLength: 24, startFragPrefetch: true }
+              : {};
+            const hls = new Hls(hlsConfig);
+            hlsRef.current = hls;
+            hls.loadSource(bestStream);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+            return;
+          }
+        } catch { /* hls.js unavailable */ }
+
+        video.src = bestStream;
+        tryPlay();
       };
-      setup();
+      void setup();
     } else {
       video.src = src;
+      tryPlay();
     }
 
     return () => {
@@ -352,6 +530,7 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
           alt=""
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           decoding="async"
+          fetchPriority="high"
         />
       )}
       <video
@@ -361,6 +540,8 @@ function HeroTrailer({ src, poster }: { src: string; poster: string | null }) {
         loop
         playsInline
         onCanPlay={handleCanPlay}
+        onLoadedData={handleCanPlay}
+        onPlaying={handleCanPlay}
         style={{
           position: 'absolute',
           top: '50%',

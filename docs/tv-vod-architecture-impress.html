@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>TV Vod — Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #0f0f1a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .step {
+    width: 1400px;
+    min-height: 800px;
+    padding: 60px 80px;
+    border-radius: 24px;
+    background: #1e1e2e;
+    box-shadow: 0 40px 100px rgba(0,0,0,.5);
+    opacity: 0.3;
+    transition: opacity 0.8s;
+  }
+  .step.active { opacity: 1; }
+
+  h1 {
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+  }
+  h2 {
+    font-size: 44px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  h3 {
+    font-size: 22px;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-bottom: 36px;
+  }
+
+  .accent   { color: #3b82f6; }
+  .green    { color: #22c55e; }
+  .purple   { color: #8b5cf6; }
+  .amber    { color: #f59e0b; }
+  .red      { color: #ef4444; }
+  .muted    { color: #94a3b8; }
+  .dim      { color: #64748b; }
+
+  /* ── title slide ── */
+  .title-slide { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .title-slide h1 { font-size: 96px; margin-bottom: 12px; }
+  .title-slide .tagline { font-size: 28px; color: #64748b; margin-top: 16px; }
+
+  /* ── bullets ── */
+  ul.bullets { list-style: none; padding: 0; }
+  ul.bullets li {
+    font-size: 22px;
+    line-height: 1.6;
+    padding: 10px 0 10px 32px;
+    position: relative;
+  }
+  ul.bullets li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: #3b82f6;
+    font-weight: 700;
+  }
+  ul.bullets li strong { color: #fff; }
+
+  /* ── bar chart ── */
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 60px;
+    height: 260px;
+    margin-top: 80px;
+  }
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .bar {
+    width: 140px;
+    border-radius: 12px 12px 0 0;
+    transition: height 0.8s ease;
+  }
+  .bar-label { font-size: 16px; color: #94a3b8; text-align: center; }
+  .bar-pct   { font-size: 22px; font-weight: 700; }
+
+  /* ── driver cards ── */
+  .drivers { display: flex; gap: 32px; margin-top: 20px; }
+  .driver-card {
+    flex: 1;
+    background: #252538;
+    border-radius: 16px;
+    padding: 36px 28px;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .driver-card.blue   { border-color: #3b82f6; }
+  .driver-card.purple { border-color: #8b5cf6; }
+  .driver-num {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 800; color: #fff;
+    margin-bottom: 18px;
+  }
+  .driver-num.blue   { background: #3b82f6; }
+  .driver-num.purple { background: #8b5cf6; }
+  .driver-card h4 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+  .driver-card p  { font-size: 16px; color: #94a3b8; line-height: 1.5; }
+
+  /* ── comparison table ── */
+  table.comparison {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  table.comparison th {
+    background: #3b82f6;
+    color: #fff;
+    font-weight: 700;
+    padding: 14px 16px;
+    text-align: left;
+  }
+  table.comparison td {
+    padding: 12px 16px;
+    vertical-align: top;
+    border-bottom: 1px solid #2a2a3e;
+  }
+  table.comparison tr:nth-child(even) td { background: #252538; }
+  table.comparison tr:nth-child(odd) td  { background: #1e1e2e; }
+  table.comparison tr.chosen td {
+    background: #052e16 !important;
+    color: #bbf7d0;
+    font-weight: 600;
+  }
+  table.comparison td:last-child { text-align: center; font-size: 22px; }
+
+  .decision-box {
+    margin-top: 28px;
+    padding: 18px 24px;
+    background: rgba(34,197,94,.1);
+    border-left: 4px solid #22c55e;
+    border-radius: 0 12px 12px 0;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  /* ── two-column layout ── */
+  .two-col { display: flex; gap: 48px; margin-top: 12px; }
+  .two-col .col { flex: 1; }
+
+  /* ── architecture boxes ── */
+  .arch-box {
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+    background: #252538;
+  }
+  .arch-box.purple { border-color: #8b5cf6; }
+  .arch-box.amber  { border-color: #f59e0b; }
+  .arch-box.gray   { border-color: #475569; }
+  .arch-box h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .arch-box h4.accent { color: #3b82f6; }
+  .arch-box h4.purple { color: #8b5cf6; }
+  .arch-box h4.amber  { color: #f59e0b; }
+  .arch-box h4.gray   { color: #94a3b8; }
+  .arch-box .items { font-size: 15px; color: #94a3b8; line-height: 1.6; }
+
+  /* ── flow steps ── */
+  ol.flow-steps { padding-left: 24px; margin-top: 16px; }
+  ol.flow-steps li {
+    font-size: 17px;
+    line-height: 1.6;
+    padding: 6px 0;
+    color: #cbd5e1;
+  }
+  ol.flow-steps li code {
+    background: #2a2a3e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #f59e0b;
+  }
+
+  /* ── roadmap table ── */
+  table.roadmap {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 17px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 24px;
+  }
+  table.roadmap th {
+    background: #f59e0b;
+    color: #fff;
+    font-weight: 700;
+    padding: 14px 18px;
+    text-align: left;
+  }
+  table.roadmap td {
+    padding: 14px 18px;
+    background: #252538;
+    vertical-align: top;
+    border-bottom: 1px solid #1e1e2e;
+    line-height: 1.5;
+  }
+
+  .roadmap-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 36px;
+  }
+  .roadmap-pill {
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .roadmap-pill.now    { background: #f59e0b; color: #fff; }
+  .roadmap-pill.future { background: #22c55e; color: #052e16; }
+  .arrow-right { font-size: 36px; color: #fff; }
+
+  /* ── platform cards ── */
+  .platforms { display: flex; gap: 24px; margin-top: 24px; }
+  .plat-card {
+    flex: 1;
+    border-radius: 14px;
+    padding: 28px 22px;
+    background: #252538;
+    border: 2px solid transparent;
+    text-align: center;
+  }
+  .plat-card h4 { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+  .plat-card p  { font-size: 14px; color: #94a3b8; line-height: 1.6; text-align: left; }
+  .plat-card.blue   { border-color: #3b82f6; }
+  .plat-card.blue h4 { color: #3b82f6; }
+  .plat-card.orange   { border-color: #f97316; }
+  .plat-card.orange h4 { color: #f97316; }
+  .plat-card.green   { border-color: #22c55e; }
+  .plat-card.green h4 { color: #22c55e; }
+  .plat-card.violet  { border-color: #a855f7; }
+  .plat-card.violet h4 { color: #a855f7; }
+
+  .spa-banner {
+    margin-top: 28px;
+    background: #22c55e;
+    color: #052e16;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .runtime-note {
+    margin-top: 18px;
+    font-size: 16px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+
+  /* ── mermaid ── */
+  .mermaid { margin-top: 20px; }
+  .mermaid svg { max-width: 100%; }
+
+  /* ── impress toolbar hide ── */
+  .impress-progressbar, .impress-progress { display: none; }
+
+  /* ── hint ── */
+  .hint {
+    position: fixed;
+    bottom: 24px;
+    right: 36px;
+    font-size: 14px;
+    color: #475569;
+    z-index: 1000;
+  }
+</style>
+</head>
+
+<body class="impress-not-supported">
+
+<div id="impress" data-transition-duration="1000" data-autoplay="0">
+
+  <!-- ═══════════════════════ SLIDE 1: Title ═══════════════════════ -->
+  <div id="title" class="step title-slide"
+       data-x="0" data-y="0" data-scale="1">
+    <h1>TV Vod</h1>
+    <h1 class="accent">Architecture</h1>
+    <p class="tagline">From decision to implementation</p>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 2: PlayVOD Starting Point ═══════════════════════ -->
+  <div id="playvod" class="step"
+       data-x="2000" data-y="0" data-z="-100" data-rotate-y="8">
+    <h2>Starting Point — PlayVOD</h2>
+    <h3>We already have a native streaming app on smartphones</h3>
+
+    <div class="two-col" style="margin-top:24px;">
+      <div class="col">
+        <p style="font-size:20px; line-height:1.6; margin-bottom:24px;">
+          <strong>PlayVOD</strong> is our existing native mobile app, live on Android and iOS.
+          We own and maintain the full codebase, and the team has deep expertise in the native stack.
+        </p>
+        <ul class="bullets">
+          <li><strong>Platforms:</strong> Android (Kotlin) + iOS (Swift)</li>
+          <li><strong>Core stack:</strong> native DRM player SDK (per-platform), licence management, content APIs, business logic, user authentication</li>
+          <li><strong>Team expertise:</strong> full ownership of the codebase — we build, ship and maintain it</li>
+        </ul>
+      </div>
+      <div class="col" style="display:flex; flex-direction:column; gap:16px;">
+        <div class="arch-box" style="border-color:#22c55e;">
+          <h4 style="color:#22c55e;">Android (Kotlin)</h4>
+          <div class="items">Native DRM SDK · Content APIs · Business logic · Material UI</div>
+        </div>
+        <div class="arch-box" style="border-color:#3b82f6;">
+          <h4 style="color:#3b82f6;">iOS (Swift)</h4>
+          <div class="items">Native DRM SDK · Content APIs · Business logic · UIKit</div>
+        </div>
+        <div style="text-align:center; color:#64748b; font-size:14px; margin-top:4px;">
+          ↓ ~90 % of each codebase reused for the TV version ↓
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 3: From Smartphones to TV ═══════════════════════ -->
+  <div id="smartphone-to-tv" class="step"
+       data-x="4000" data-y="-200" data-z="-200" data-rotate-y="12">
+    <h2>From Smartphones to TV</h2>
+    <h3>Low-effort extension to Android TV &amp; Apple TV — reusing ~90 % of the codebase</h3>
+
+    <table class="comparison" style="margin-top:24px;">
+      <tr>
+        <th>Layer</th><th>Reused from PlayVOD</th><th>TV-specific adaptation</th>
+      </tr>
+      <tr>
+        <td><strong>DRM player + licence</strong></td>
+        <td class="green">✓ Same SDK, same licence</td>
+        <td class="dim">—</td>
+      </tr>
+      <tr>
+        <td><strong>Business logic &amp; APIs</strong></td>
+        <td class="green">✓ Content, auth, payments</td>
+        <td class="dim">—</td>
+      </tr>
+      <tr>
+        <td><strong>Native SDKs</strong></td>
+        <td class="green">✓ Same per-platform SDKs</td>
+        <td class="dim">—</td>
+      </tr>
+      <tr>
+        <td><strong>UI / UX</strong></td>
+        <td class="amber">Partial</td>
+        <td>New TV layouts, D-pad navigation, 10-foot UI</td>
+      </tr>
+    </table>
+
+    <div style="display:flex; gap:32px; margin-top:32px;">
+      <div style="flex:1; background:#252538; border:2px solid #22c55e; border-radius:14px; padding:24px; text-align:center;">
+        <h4 style="color:#22c55e; font-size:20px; margin-bottom:8px;">Android TV</h4>
+        <p class="muted" style="font-size:15px;">Same Kotlin codebase + TV Activity / Leanback UI → <code>.apk</code></p>
+      </div>
+      <div style="flex:1; background:#252538; border:2px solid #3b82f6; border-radius:14px; padding:24px; text-align:center;">
+        <h4 style="color:#3b82f6; font-size:20px; margin-bottom:8px;">Apple TV (tvOS)</h4>
+        <p class="muted" style="font-size:15px;">Same Swift codebase + TVUIKit / focus engine → <code>.ipa</code></p>
+      </div>
+    </div>
+
+    <div class="decision-box" style="margin-top:28px; background:rgba(245,158,11,.1); border-left-color:#f59e0b;">
+      <strong class="amber">But what about the rest of the market?</strong>
+      Samsung (Tizen) and LG (webOS) don't support native Android/iOS SDKs — we need a different approach.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 3b: Demos ═══════════════════════ -->
+  <div id="demos" class="step"
+       data-x="6200" data-y="0" data-z="-150" data-rotate-y="6"
+       style="display:flex; flex-direction:column; justify-content:center;">
+    <h2>Demos — Native TV Apps</h2>
+    <h3>Video walkthroughs of the PlayVOD TV experience</h3>
+
+    <div style="display:flex; gap:48px; margin-top:60px; justify-content:center;">
+      <!-- Android TV demo -->
+      <a href="video-demo/android_native_tv_demo.mp4" target="_blank" style="text-decoration:none; flex:1; max-width:540px;">
+        <div style="background:#252538; border:2px solid #22c55e; border-radius:16px; padding:40px 32px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="font-size:64px; margin-bottom:20px;">📺</div>
+          <h4 style="color:#22c55e; font-size:28px; margin-bottom:12px;">Android TV</h4>
+          <p class="muted" style="font-size:16px;">Kotlin · Leanback UI · .apk</p>
+          <div style="margin-top:24px; background:#22c55e; color:#052e16; padding:12px 24px; border-radius:10px; font-weight:700; font-size:18px; display:inline-block;">
+            ▶  Watch demo
+          </div>
+        </div>
+      </a>
+
+      <!-- Apple TV demo -->
+      <a href="video-demo/tvOS_demo.mp4" target="_blank" style="text-decoration:none; flex:1; max-width:540px;">
+        <div style="background:#252538; border:2px solid #3b82f6; border-radius:16px; padding:40px 32px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="font-size:64px; margin-bottom:20px;">🍎</div>
+          <h4 style="color:#3b82f6; font-size:28px; margin-bottom:12px;">Apple TV</h4>
+          <p class="muted" style="font-size:16px;">Swift · TVUIKit · .ipa</p>
+          <div style="margin-top:24px; background:#3b82f6; color:#fff; padding:12px 24px; border-radius:10px; font-weight:700; font-size:18px; display:inline-block;">
+            ▶  Watch demo
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 4: Context ═══════════════════════ -->
+  <div id="context" class="step"
+       data-x="8400" data-y="0" data-z="-200" data-rotate-y="15">
+    <h2>Context</h2>
+    <h3>Global Smart TV OS Market Share</h3>
+
+    <p class="muted" style="font-size:18px; margin-bottom: 24px;">
+      Globally, Android/Google TV leads in total installations, while Tizen leads in usage due to Samsung's strong hardware sales.
+    </p>
+
+    <ul class="bullets">
+      <li><strong class="accent">Android/Google TV:</strong> Top spot in global shipments, &gt;24 % and projected to remain dominant.</li>
+      <li><strong class="amber">Tizen (Samsung):</strong> No. 1 in global installed base, approximately 12.8–17 % market share.</li>
+      <li><strong class="purple">webOS (LG):</strong> A strong third place, capturing around 11–12 % of global shipments.</li>
+    </ul>
+
+    <div class="bar-chart">
+      <div class="bar-col">
+        <span class="bar-pct accent">~24 %</span>
+        <div class="bar" style="height:240px; background:linear-gradient(180deg,#3b82f6,#2563eb);"></div>
+        <span class="bar-label">Android /<br>Google TV</span>
+      </div>
+      <div class="bar-col">
+        <span class="bar-pct amber">~17 %</span>
+        <div class="bar" style="height:170px; background:linear-gradient(180deg,#f59e0b,#d97706);"></div>
+        <span class="bar-label">Tizen<br>(Samsung)</span>
+      </div>
+      <div class="bar-col">
+        <span class="bar-pct purple">~12 %</span>
+        <div class="bar" style="height:120px; background:linear-gradient(180deg,#8b5cf6,#7c3aed);"></div>
+        <span class="bar-label">webOS<br>(LG)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 3: Drivers ═══════════════════════ -->
+  <div id="drivers" class="step"
+       data-x="10400" data-y="400" data-z="-400" data-rotate-y="30">
+    <h2>TV App Architecture — Options</h2>
+    <h3>Three drivers shape the decision</h3>
+
+    <div class="drivers">
+      <div class="driver-card blue">
+        <div class="driver-num blue">1</div>
+        <h4>Maximise market coverage</h4>
+        <p>Ship on Android/Google TV, Tizen (Samsung), webOS (LG), Apple TV — together &gt;60 % of global Smart TV shipments.</p>
+      </div>
+      <div class="driver-card blue">
+        <div class="driver-num blue">2</div>
+        <h4>Web-based DRM SDK</h4>
+        <p>Playback relies on <code style="color:#f59e0b">@digitalvirgo/drm-player</code> — a <strong style="color:#22c55e">façade</strong> built ad-hoc to wrap the licensed DRM SDK into a simple, reusable component for Bolt.new. Runs in a browser / WebView; non-web runtimes are ruled out.</p>
+        <a href="https://github.com/matteoburgassi/drm-player" target="_blank"
+           style="display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:6px 14px;
+                  background:#1a1a2e; border:1px solid #f59e0b; border-radius:8px;
+                  color:#f59e0b; text-decoration:none; font-size:0.85em; font-weight:600;">
+          <svg height="16" width="16" viewBox="0 0 16 16" fill="#f59e0b"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          matteoburgassi/drm-player
+        </a>
+      </div>
+      <div class="driver-card purple">
+        <div class="driver-num purple">3</div>
+        <h4>Bolt.new as accelerator</h4>
+        <p>AI-powered rapid prototyping that excels at React/Vite web apps and React Native — making web architectures significantly faster to iterate on.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 4: Comparison table ═══════════════════════ -->
+  <div id="comparison" class="step"
+       data-x="12200" data-y="1000" data-z="-200" data-rotate-y="10">
+    <h2>Architecture Comparison</h2>
+    <h3 style="margin-bottom:20px;">Five approaches evaluated against our constraints</h3>
+
+    <table class="comparison">
+      <tr>
+        <th>Approach</th><th>Description</th><th>Pros</th><th>Cons</th><th></th>
+      </tr>
+      <tr>
+        <td><strong>Fully Native</strong></td>
+        <td>One native app per OS (Swift / Kotlin / C++)</td>
+        <td>Best performance &amp; platform APIs</td>
+        <td>N codebases, N teams; N DRM SDK integrations (one per platform); no Bolt.new leverage</td>
+        <td style="font-size:28px;">&#10003;</td>
+      </tr>
+      <tr>
+        <td><strong>Cross-platform Native</strong></td>
+        <td>Single codebase → native (React Native, Flutter)</td>
+        <td>Shared logic, native rendering; Bolt.new can scaffold RN</td>
+        <td>No Tizen / webOS → misses ~25 % market; DRM SDK needs a WebView</td>
+        <td class="red">&#10008;</td>
+      </tr>
+      <tr>
+        <td><strong>Lightning / WPE</strong></td>
+        <td>TV-specific JS framework (Metrological)</td>
+        <td>Built for low-end SoCs, operator ecosystem</td>
+        <td>Vendor lock-in; DRM integration not guaranteed; no Bolt.new support</td>
+        <td class="red">&#10008;</td>
+      </tr>
+      <tr>
+        <td><strong>Packaged Web App</strong></td>
+        <td>Bundled HTML/JS/CSS inside each shell</td>
+        <td>Offline-capable, store-distributed; Bolt.new can generate it</td>
+        <td>DRM licence requires hosted origin; re-packaging on every update</td>
+        <td class="red">&#10008;</td>
+      </tr>
+      <tr>
+        <td><strong>Hosted Web App (Hybrid)</strong></td>
+        <td>Thin native shell loads a remote SPA in a WebView</td>
+        <td>Single codebase, OTA updates, DRM &#10003;, all target OSes; Bolt.new ideal for React/Vite iteration</td>
+        <td>Needs connectivity; WebView perf varies by device</td>
+        <td style="font-size:28px;">&#10003;</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 5: Architecture Decision Diagram ═══════════════════════ -->
+  <div id="decision-diagram" class="step"
+       data-x="14000" data-y="600" data-z="-600" data-rotate-y="20">
+    <h2>Architecture Decision</h2>
+    <h3>Constraints and accelerators funnel to a single viable option</h3>
+
+    <div class="mermaid">
+flowchart TD
+  C1[/Constraint: max market share/]
+  C2[/Constraint: web-based DRM SDK/]
+  C3[/Accelerator: Bolt.new/]
+
+  C1 & C2 & C3 --> Q{Which architecture?}
+
+  Q --> Native[Fully Native]
+  Q --> XNative[Cross-platform Native]
+  Q --> Lightning[Lightning / WPE]
+  Q --> Packaged[Packaged Web App]
+  Q --> Hosted[Hosted Web App — Hybrid]
+
+  Native   -- "PlayVOD — Android TV + Apple TV" --> X1((✅))
+  XNative  -. "no Tizen / webOS → limited reach" .-> X2((❌))
+  Lightning -. "vendor lock-in, DRM unclear" .-> X3((❌))
+  Packaged -. "DRM licence requires hosted origin" .-> X4((❌))
+  Hosted   -- "1 SPA, all OSes, DRM ✓, Bolt.new ✓" --> Win((✅ Chosen))
+
+  style C1 fill:#3b82f6,color:#fff
+  style C2 fill:#3b82f6,color:#fff
+  style C3 fill:#8b5cf6,color:#fff
+  style Hosted fill:#22c55e,color:#052e16,stroke:#16a34a,stroke-width:3px
+  style Win fill:#22c55e,color:#052e16
+  style Native fill:#22c55e,color:#052e16,stroke:#16a34a,stroke-width:3px
+  style XNative fill:#fee2e2,color:#991b1b
+  style Lightning fill:#fee2e2,color:#991b1b
+  style Packaged fill:#fee2e2,color:#991b1b
+  style X1 fill:#22c55e,color:#052e16
+  style X2 fill:#ef4444,color:#fff
+  style X3 fill:#ef4444,color:#fff
+  style X4 fill:#ef4444,color:#fff
+    </div>
+
+    <div class="decision-box">
+      <strong class="green">Decision:</strong>
+      Only the <strong>Hosted Web App (Hybrid)</strong> satisfies all three drivers — DRM SDK in its licensed web origin, maximum market coverage via thin native shells, and Bolt.new for rapid React/Vite iteration.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 6: Development Workflow ═══════════════════════ -->
+  <div id="workflow" class="step"
+       data-x="15800" data-y="800" data-z="-500" data-rotate-y="5">
+    <h2>Development Workflow</h2>
+    <h3>Two AI tools, two domains</h3>
+
+    <div style="display:flex; gap:40px; margin-top:16px;">
+      <!-- Bolt.new phase -->
+      <div style="flex:1; background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+          <div style="background:#f59e0b; color:#fff; font-weight:800; font-size:20px; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">1</div>
+          <h4 style="font-size:24px; font-weight:700; color:#f59e0b; margin:0;">Bolt.new</h4>
+        </div>
+        <p class="muted" style="font-size:15px; margin-bottom:14px;">Front-end — the user-facing app</p>
+        <ul class="bullets" style="font-size:16px;">
+          <li><strong>React SPA</strong> — Vite, Tailwind, spatial navigation, pages, playback</li>
+          <li><strong>React Native</strong> — Apple TV app</li>
+          <li>UI, routing, auth flows, DRM player integration</li>
+        </ul>
+        <div style="margin-top:16px; display:flex; gap:12px;">
+          <span style="background:#f59e0b; color:#fff; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;">Hosted SPA</span>
+          <span style="background:#f59e0b; color:#fff; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;">.ipa (Apple TV)</span>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="display:flex; align-items:center; font-size:48px; color:#fff;">→</div>
+
+      <!-- Cursor phase -->
+      <div style="flex:1; background:#252538; border:2px solid #8b5cf6; border-radius:16px; padding:28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+          <div style="background:#8b5cf6; color:#fff; font-weight:800; font-size:20px; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">2</div>
+          <h4 style="font-size:24px; font-weight:700; color:#8b5cf6; margin:0;">Cursor</h4>
+        </div>
+        <p class="muted" style="font-size:15px; margin-bottom:14px;">Infrastructure — the platform glue</p>
+        <ul class="bullets" style="font-size:16px;">
+          <li><strong>Cloudflare Worker</strong> — CORS proxy + QR device-code auth</li>
+          <li><strong>Native shells</strong> — webOS, Tizen, Android TV configs &amp; build scripts</li>
+          <li>Manifests, packaging pipelines, deploy tooling, runtime bridge</li>
+        </ul>
+        <div style="margin-top:16px; display:flex; gap:12px;">
+          <span style="background:#8b5cf6; color:#fff; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;">Edge proxy</span>
+          <span style="background:#8b5cf6; color:#fff; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;">.ipk / .wgt / .apk</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div style="margin-top:28px; background:#22c55e; color:#052e16; font-size:20px; font-weight:700; padding:16px; border-radius:12px; text-align:center;">
+      → Every TV screen ←
+    </div>
+
+    <p class="muted" style="margin-top:16px; font-size:16px; text-align:center;">
+      <strong class="amber">Bolt.new</strong> delivers the user-facing app fast; <strong class="purple">Cursor</strong> wires the infrastructure and platform glue that ships it to every TV.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 7: Front-end ═══════════════════════ -->
+  <div id="frontend" class="step"
+       data-x="17800" data-y="0" data-z="-300" data-rotate-y="-10">
+    <h2>Front-end Architecture</h2>
+    <h3>From Bolt-style iteration to a production-oriented TV web app</h3>
+
+    <div class="two-col">
+      <div class="col">
+        <ul class="bullets">
+          <li><strong>Stack:</strong> React 19, TypeScript, Vite 7, Tailwind CSS 4, <code>HashRouter</code> (TV-friendly deep links).</li>
+          <li><strong>TV UX:</strong> <code>@noriginmedia/norigin-spatial-navigation</code> for D-pad focus; pages &amp; shared UI under <code>src/pages</code>, <code>src/components</code>.</li>
+          <li><strong>Monorepo packages:</strong> <code>tv-vod-api</code> (Galaxy content client + asset helpers), <code>tv-vod-auth</code> (device login, SmartVideo / DVE wiring).</li>
+          <li><strong>Playback:</strong> <code style="color:#f59e0b">@digitalvirgo/drm-player</code> + HLS — a <strong style="color:#22c55e">façade</strong> wrapping the licensed DRM SDK so Bolt.new can integrate playback in one line.
+            <a href="https://github.com/matteoburgassi/drm-player" target="_blank"
+               style="display:inline-flex; align-items:center; gap:4px; margin-left:6px; padding:2px 10px;
+                      background:#1a1a2e; border:1px solid #f59e0b; border-radius:6px;
+                      color:#f59e0b; text-decoration:none; font-size:0.8em; font-weight:600; vertical-align:middle;">
+              <svg height="14" width="14" viewBox="0 0 16 16" fill="#f59e0b"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              GitHub
+            </a><br>
+            Env-based hosts (<code>VITE_*</code>) with dev proxies in <code>vite.config.ts</code>.
+          </li>
+          <li><strong>Bolt.new role:</strong> rapid UI/flow iteration; the same layers live in-repo as one SPA: <code>index.html → src/main.tsx</code>.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="arch-box">
+          <h4 class="accent">React SPA (Vite)</h4>
+          <div class="items">Pages &amp; Components · Spatial navigation · HashRouter · AuthContext · DRM Player + HLS</div>
+        </div>
+        <div class="arch-box purple">
+          <h4 class="purple">Workspace packages</h4>
+          <div class="items">tv-vod-api · tv-vod-auth</div>
+        </div>
+        <div class="arch-box amber">
+          <h4 class="amber">Cloudflare Worker</h4>
+          <div class="items">CORS proxy · Device code auth + KV</div>
+        </div>
+        <div class="arch-box gray">
+          <h4 class="gray">Backend HTTP</h4>
+          <div class="items">Galaxy content API · DVE User API · SmartVideo API</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 7: Front-end Diagram ═══════════════════════ -->
+  <div id="frontend-diagram" class="step"
+       data-x="19600" data-y="400" data-z="-500" data-rotate-y="5">
+    <h2>Front-end Diagram</h2>
+    <h3>Data flow from browser through packages to backends</h3>
+
+    <div class="mermaid">
+flowchart TB
+  subgraph spa [React SPA — Vite]
+    UI[Pages & Components]
+    Focus[Norigin spatial navigation]
+    Router[HashRouter routes]
+    AuthCtx[AuthContext]
+    Player[DRM player + HLS]
+  end
+  subgraph ws [Workspace packages]
+    ApiPkg[tv-vod-api]
+    AuthPkg[tv-vod-auth]
+  end
+  subgraph proxy [Cloudflare Worker]
+    CORSProxy[CORS proxy]
+    DeviceFlow[Device code auth + KV]
+  end
+  subgraph net [Backend HTTP]
+    Galaxy[Galaxy content API]
+    UserAPI[DVE User API]
+    SmartVideo[SmartVideo API]
+  end
+  Browser[Browser / TV WebView]
+  Browser --> spa
+  spa --> ws
+  AuthPkg --> CORSProxy
+  AuthPkg --> DeviceFlow
+  ApiPkg --> Galaxy
+  Player --> CORSProxy
+  CORSProxy --> UserAPI
+  CORSProxy --> SmartVideo
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 8: Server API Layer ═══════════════════════ -->
+  <div id="server" class="step"
+       data-x="21400" data-y="800" data-z="-400" data-rotate-y="15">
+    <h2 class="amber">Server API Layer</h2>
+    <h3>Cloudflare Worker — CORS proxy + device-code authentication</h3>
+
+    <div class="two-col">
+      <div class="col">
+        <ul class="bullets">
+          <li><strong>Cloudflare Worker</strong> (<code>proxy/src/index.ts</code>) deployed at <code>smartvideo-cors-proxy.*.workers.dev</code>.</li>
+          <li><strong>CORS reverse proxy</strong> — SPA runs on a different origin; Worker forwards &amp; injects CORS headers:
+            <br><code>/smartvideo/*</code> → SmartVideo API
+            <br><code>/auth/*</code> → DVE User API</li>
+          <li><strong>Dev proxy</strong> — Vite mirrors the same paths locally.</li>
+          <li><strong>Client package</strong> — <code>tv-vod-auth/deviceCode.ts</code> wraps the three device endpoints.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4 style="color:#f59e0b; font-size:20px; margin-bottom:12px;">Device-code (QR) auth flow</h4>
+        <ol class="flow-steps">
+          <li>TV calls <code>POST /device/code</code> → Worker generates 6-char PIN, stores <code>{ status: 'pending' }</code> in KV.</li>
+          <li>TV displays QR code encoding the pairing URL with the PIN.</li>
+          <li>User scans QR → <code>PairPage</code> lets them log in → <code>POST /device/verify</code>.</li>
+          <li>TV polls <code>GET /device/poll</code> every 3 s → once complete, Worker returns user.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 9: Server Diagram ═══════════════════════ -->
+  <div id="server-diagram" class="step"
+       data-x="23200" data-y="400" data-z="-600" data-rotate-y="25">
+    <h2 class="amber">Server API — Diagram</h2>
+    <h3>Device pairing flow + CORS proxy to upstream APIs</h3>
+
+    <div class="mermaid">
+flowchart LR
+  subgraph tv [TV SPA]
+    Login[LoginPage — show QR]
+    Poll[Poll /device/poll]
+  end
+  subgraph phone [Phone / Laptop]
+    Pair[PairPage — enter code + login]
+  end
+  subgraph worker [Cloudflare Worker]
+    DevCode[POST /device/code]
+    DevVerify[POST /device/verify]
+    DevPoll[GET /device/poll]
+    Proxy[CORS reverse proxy]
+    KV[(Workers KV — DEVICE_CODES)]
+  end
+  subgraph backends [Upstream APIs]
+    SV[SmartVideo API]
+    User[DVE User API]
+  end
+
+  Login -- "1 request code" --> DevCode
+  DevCode -- "store pending" --> KV
+  DevCode -- "return PIN" --> Login
+  Pair -- "2 verify code + user" --> DevVerify
+  DevVerify -- "mark complete" --> KV
+  Poll -- "3 poll status" --> DevPoll
+  DevPoll -- "read KV" --> KV
+  DevPoll -- "return user" --> Poll
+
+  Proxy -- "/smartvideo/*" --> SV
+  Proxy -- "/auth/*" --> User
+
+  style worker fill:#f59e0b,color:#fff
+  style KV fill:#fbbf24,color:#78350f
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 10: Roadmap ═══════════════════════ -->
+  <div id="roadmap" class="step"
+       data-x="25000" data-y="0" data-z="-300" data-rotate-y="-5">
+    <h2>Roadmap</h2>
+    <h3>What the Worker replaces — both responsibilities are temporary scaffolding</h3>
+
+    <table class="roadmap">
+      <tr>
+        <th>Current (Worker)</th>
+        <th>Future</th>
+        <th>Impact</th>
+      </tr>
+      <tr>
+        <td><strong>CORS reverse proxy</strong></td>
+        <td>Dedicated domain — SPA and APIs share the same origin (or APIs return proper CORS headers)</td>
+        <td>Proxy layer disappears entirely; SPA calls APIs directly</td>
+      </tr>
+      <tr>
+        <td><strong>Device-code (QR) auth</strong></td>
+        <td>Implement device-flow endpoints in <strong class="green">SmartUser</strong> (DVE's central auth service)</td>
+        <td>Flow becomes a first-class DV platform feature, reusable by any DV app (mobile, web, TV)</td>
+      </tr>
+    </table>
+
+    <div class="roadmap-arrow">
+      <div class="roadmap-pill now">Now: Cloudflare Worker</div>
+      <span class="arrow-right">→</span>
+      <div class="roadmap-pill future">Future: Dedicated domain + SmartUser</div>
+    </div>
+
+    <p class="muted" style="margin-top:28px; font-size:17px; text-align:center;">
+      Once both migrations land, the Cloudflare Worker can be decommissioned and <code>tv-vod-auth</code> switches its base URL to the SmartUser endpoints.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE 11: Native Layer ═══════════════════════ -->
+  <div id="native" class="step"
+       data-x="26800" data-y="600" data-z="-400" data-rotate-y="10">
+    <h2>Native Layer</h2>
+    <h3>webOS, Tizen, Android TV, Apple TV — packaged shells that bootstrap the SPA</h3>
+
+    <div class="platforms">
+      <div class="plat-card blue">
+        <h4>LG webOS</h4>
+        <p>appinfo.json + assets<br>build-webos.sh → output/webos/<br>.ipk via ares-package<br>Deploy via ares-launch</p>
+      </div>
+      <div class="plat-card orange">
+        <h4>Samsung Tizen</h4>
+        <p>config.xml + icon<br>build-tizen.sh → output/tizen/<br>.wgt via Tizen CLI</p>
+      </div>
+      <div class="plat-card green">
+        <h4>Android TV</h4>
+        <p>WebView + index.html<br>.apk via Gradle</p>
+      </div>
+      <div class="plat-card violet">
+        <h4>Apple TV</h4>
+        <p>React Native<br>.ipa via Xcode</p>
+      </div>
+    </div>
+
+    <div class="spa-banner">
+      → All shells load the same Hosted SPA (tv-vod.blast.dvbuilder.com) ←
+    </div>
+
+    <p class="runtime-note">
+      <strong>Runtime bridge:</strong> <code>platformInit.ts</code> registers Tizen media keys when <code>window.tizen</code> exists;
+      <code>isTV()</code> uses <code>webOS</code> / <code>tizen</code> / <code>?platform=</code> so the SPA adapts to the TV environment.
+    </p>
+
+    <div style="margin-top:18px; padding:14px 20px; background:rgba(139,92,246,.12); border-left:4px solid #8b5cf6; border-radius:0 10px 10px 0; font-size:16px; line-height:1.6;">
+      <strong class="purple">Cursor as accelerator:</strong>
+      The entire native shell layer — platform configs, build scripts, packaging pipelines and deploy tooling — was scaffolded and iterated on with <strong>Cursor</strong> (AI-assisted coding), allowing a single developer to ship shells for four OSes in a fraction of the time it would take manually.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE: webOS Demos ═══════════════════════ -->
+  <div id="webos-demos" class="step"
+       data-x="28800" data-y="0" data-z="-300" data-rotate-y="-5"
+       style="display:flex; flex-direction:column; justify-content:center;">
+    <h2>Demos — webOS TV App</h2>
+    <h3>Video walkthroughs of the Hosted Web App on LG webOS</h3>
+
+    <div style="display:flex; gap:48px; margin-top:60px; justify-content:center;">
+      <!-- Simulator demo -->
+      <a href="video-demo/lg_tv_simulator.mp4" target="_blank" style="text-decoration:none; flex:1; max-width:540px;">
+        <div style="background:#252538; border:2px solid #3b82f6; border-radius:16px; padding:40px 32px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="font-size:64px; margin-bottom:20px;">🖥️</div>
+          <h4 style="color:#3b82f6; font-size:28px; margin-bottom:12px;">webOS Simulator</h4>
+          <p class="muted" style="font-size:16px;">ares-launch · webOS IDE emulator</p>
+          <div style="margin-top:24px; background:#3b82f6; color:#fff; padding:12px 24px; border-radius:10px; font-weight:700; font-size:18px; display:inline-block;">
+            ▶  Watch demo
+          </div>
+        </div>
+      </a>
+
+      <!-- Real TV demo -->
+      <a href="video-demo/lg_tv_qbert.mp4" target="_blank" style="text-decoration:none; flex:1; max-width:540px;">
+        <div style="background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:40px 32px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="font-size:64px; margin-bottom:20px;">📺</div>
+          <h4 style="color:#f59e0b; font-size:28px; margin-bottom:12px;">Real LG TV</h4>
+          <p class="muted" style="font-size:16px;">ares-install · deployed on hardware</p>
+          <div style="margin-top:24px; background:#f59e0b; color:#fff; padding:12px 24px; border-radius:10px; font-weight:700; font-size:18px; display:inline-block;">
+            ▶  Watch demo
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════ SLIDE: Thank You ═══════════════════════ -->
+  <div id="thankyou" class="step title-slide"
+       data-x="30800" data-y="0" data-z="-200" data-rotate-y="0">
+    <h1>Thank You</h1>
+    <h1 class="muted" style="font-size:36px; font-weight:400; margin-top:8px;">Questions?</h1>
+
+    <div style="margin-top:60px;">
+      <p class="amber" style="font-size:22px; font-weight:700; margin-bottom:24px;">Bonus demo</p>
+      <a href="video-demo/android_auto_demo.mp4" target="_blank" style="text-decoration:none;">
+        <div style="background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:32px 48px; text-align:center; display:inline-block; transition:transform 0.3s; cursor:pointer;"
+             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="font-size:52px; margin-bottom:14px;">🚗</div>
+          <h4 style="color:#f59e0b; font-size:26px; margin-bottom:8px;">Android Auto — PlayVOD</h4>
+          <p class="muted" style="font-size:15px;">The same native stack, now in your car</p>
+          <div style="margin-top:20px; background:#f59e0b; color:#fff; padding:10px 28px; border-radius:10px; font-weight:700; font-size:17px; display:inline-block;">
+            ▶  Watch demo
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ SLIDE: Overview (zoom out) ═══════════════════════ -->
+  <div id="overview" class="step"
+       data-x="16000" data-y="400" data-z="-5000" data-scale="15"
+       style="pointer-events:none; background:transparent; box-shadow:none;">
+  </div>
+
+</div>
+
+<div class="hint">Use arrow keys or spacebar to navigate · Press <kbd>Home</kbd> for overview</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1e1e2e',
+      primaryColor: '#3b82f6',
+      primaryTextColor: '#fff',
+      lineColor: '#64748b',
+      secondaryColor: '#8b5cf6',
+      tertiaryColor: '#252538',
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '14px'
+    },
+    flowchart: { curve: 'basis', htmlLabels: true }
+  });
+
+  (async () => {
+    await mermaid.run({ querySelector: '.mermaid' });
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/gh/impress/impress.js@2.0.0/js/impress.js';
+    script.onload = function() { impress().init(); };
+    document.body.appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

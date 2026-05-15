@@ -95,7 +95,7 @@
     transition: height 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   
-  /* Delayed animation when slide becomes active */
+  /* Bar and percentage animations when slide becomes active */
   .step.active .bar[style*="height:240px"] { 
     height: 240px !important; 
     transition-delay: 0.8s;
@@ -106,6 +106,209 @@
   }
   .step.active .bar[style*="height:120px"] { 
     height: 120px !important; 
+    transition-delay: 1.2s;
+  }
+
+  /* Percentage labels grow animation */
+  .bar-pct {
+    transform: scale(0);
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active .bar-col:nth-child(1) .bar-pct {
+    transform: scale(1);
+    transition-delay: 1.0s;
+  }
+  
+  .step.active .bar-col:nth-child(2) .bar-pct {
+    transform: scale(1);
+    transition-delay: 1.2s;
+  }
+  
+  .step.active .bar-col:nth-child(3) .bar-pct {
+    transform: scale(1);
+    transition-delay: 1.4s;
+  }
+
+  /* Video demos fade-in animation */
+  #video-demos {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active #video-demos {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.0s;
+  }
+
+  /* Driver cards fade-in animation */
+  .driver-card {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active .driver-card:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active .driver-card:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.2s;
+  }
+  
+  .step.active .driver-card:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.6s;
+  }
+
+  /* Workflow cards fade-in animation */
+  .workflow-item {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active .workflow-item:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active .workflow-item:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.2s;
+  }
+  
+  .step.active .workflow-item:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.6s;
+  }
+
+  /* Frontend cards fade-in animation from top */
+  .arch-box {
+    opacity: 0;
+    transform: translateY(-40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active .arch-box:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active .arch-box:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.2s;
+  }
+  
+  .step.active .arch-box:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.6s;
+  }
+  
+  .step.active .arch-box:nth-child(4) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 2.0s;
+  }
+
+  /* Native layer cards fade-in animation from top */
+  .plat-card {
+    opacity: 0;
+    transform: translateY(-40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active .plat-card:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active .plat-card:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.2s;
+  }
+  
+  .step.active .plat-card:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.6s;
+  }
+  
+  .step.active .plat-card:nth-child(4) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 2.0s;
+  }
+
+  /* WebOS demos fade-in animation from bottom */
+  #webos-demos a {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active#webos-demos a:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active#webos-demos a:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.2s;
+  }
+
+  /* Smartphone-to-TV slide animations from left - only cards */
+  #smartphone-to-tv > div > div {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active#smartphone-to-tv > div > div:nth-child(1) {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active#smartphone-to-tv > div > div:nth-child(2) {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 1.2s;
+  }
+
+  /* Demos slide animations from bottom */
+  #demos a {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .step.active#demos a:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.8s;
+  }
+  
+  .step.active#demos a:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
     transition-delay: 1.2s;
   }
   .bar-label { font-size: 16px; color: #94a3b8; text-align: center; }
@@ -617,7 +820,7 @@ flowchart TD
 
     <div style="display:flex; gap:40px; margin-top:16px;">
       <!-- Bolt.new phase -->
-      <div style="flex:1; background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:28px;">
+      <div class="workflow-item" style="flex:1; background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:28px;">
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
           <div style="background:#f59e0b; color:#fff; font-weight:800; font-size:20px; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">1</div>
           <h4 style="font-size:24px; font-weight:700; color:#f59e0b; margin:0;">Bolt.new</h4>
@@ -635,10 +838,10 @@ flowchart TD
       </div>
 
       <!-- Arrow -->
-      <div style="display:flex; align-items:center; font-size:48px; color:#fff;">→</div>
+      <div class="workflow-item" style="display:flex; align-items:center; font-size:48px; color:#fff;">→</div>
 
       <!-- Cursor phase -->
-      <div style="flex:1; background:#252538; border:2px solid #8b5cf6; border-radius:16px; padding:28px;">
+      <div class="workflow-item" style="flex:1; background:#252538; border:2px solid #8b5cf6; border-radius:16px; padding:28px;">
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
           <div style="background:#8b5cf6; color:#fff; font-weight:800; font-size:20px; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">2</div>
           <h4 style="font-size:24px; font-weight:700; color:#8b5cf6; margin:0;">Cursor</h4>
@@ -944,21 +1147,47 @@ flowchart LR
     <h1 class="muted" style="font-size:36px; font-weight:400; margin-top:8px;">Questions?</h1>
 
     <div style="margin-top:60px;">
-      <p class="amber" style="font-size:22px; font-weight:700; margin-bottom:24px;">Bonus demo</p>
-      <div style="text-decoration:none;">
-        <div style="background:#252538; border:2px solid #f59e0b; border-radius:16px; padding:32px 48px; text-align:center; display:inline-block; transition:transform 0.3s; cursor:pointer;"
-             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-          <div style="margin-bottom:14px;">
-            <img src="img/tablet-small.png" alt="Tablet" style="width:80px; height:auto;" />
-          </div>
-          <h4 style="color:#f59e0b; font-size:26px; margin-bottom:8px;">PlayVOD on Tablet</h4>
-          <p class="muted" style="font-size:15px;">The same native stack, now in your iPad</p></div>
+      <div style="display: flex; align-items: center; justify-content: center; margin-bottom:32px;">
+        <p class="amber" style="font-size:22px; font-weight:700; margin:0 15px 0 0;">Bonus: Tablet Version</p>
+        <img src="img/tablet-small.png" alt="Tablet" style="width:150px; height:auto;" />
       </div>
-          <div style="margin-top:20px; background:#f59e0b; color:#fff; padding:10px 28px; border-radius:10px; font-weight:700; font-size:17px; display:inline-block;">
-            ▶  Watch demo
+      
+      <div id="video-demos" style="display: flex; gap: 80px; justify-content: center; align-items: center;">
+        
+        <!-- Android -->
+        <div style="text-align: center;">
+          <h4 style="color:#f59e0b; font-size:28px; margin-bottom:24px;">Android</h4>
+          
+          <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="video-demo/android_tablet_portrait.mp4" target="_blank" style="text-decoration:none;">
+              <div style="background:#252538; border:2px solid #f59e0b; border-radius:12px; padding:20px 28px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+                   onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="color:#f59e0b; font-size:16px; font-weight:700;">▶ Portrait</div>
+              </div>
+            </a>
+            
+            <a href="video-demo/android_tablet_landscape.mp4" target="_blank" style="text-decoration:none;">
+              <div style="background:#252538; border:2px solid #f59e0b; border-radius:12px; padding:20px 28px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+                   onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="color:#f59e0b; font-size:16px; font-weight:700;">▶ Landscape</div>
+              </div>
+            </a>
           </div>
         </div>
-      </a>
+        
+        <!-- iOS -->
+        <div style="text-align: center;">
+          <h4 style="color:#8b5cf6; font-size:28px; margin-bottom:24px;">iOS</h4>
+          
+          <a href="video-demo/tablet-iOS-demo.mp4" target="_blank" style="text-decoration:none;">
+            <div style="background:#252538; border:2px solid #8b5cf6; border-radius:12px; padding:20px 28px; text-align:center; transition:transform 0.3s; cursor:pointer;"
+                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <div style="color:#8b5cf6; font-size:16px; font-weight:700;">▶ iPad Demo</div>
+            </div>
+          </a>
+        </div>
+        
+      </div>
     </div>
   </div>
 
@@ -1001,30 +1230,65 @@ flowchart LR
       // Wait for impress to fully initialize, then add key bindings
       setTimeout(function() {
         var api = impress();
-        console.log('Delayed API object:', api);
+        console.log('=== IMPRESS API DEBUGGING ===');
+        console.log('API object:', api);
+        console.log('API methods:', Object.getOwnPropertyNames(api));
+        console.log('Overview element exists:', !!document.getElementById('overview'));
+        console.log('All steps:', document.querySelectorAll('.step').length);
+        
+        // Log current step changes
+        document.addEventListener('impress:stepenter', function(event) {
+          console.log('Entered step:', event.target.id);
+        });
+        
+        document.addEventListener('impress:stepleave', function(event) {
+          console.log('Left step:', event.target.id);
+        });
         
         document.addEventListener('keydown', function(e) {
           console.log('Key pressed:', e.key, e.keyCode);
           
           if (e.keyCode === 36 || e.key === 'Home') {
-            console.log('Home key detected, going to overview');
+            console.log('=== HOME KEY PRESSED ===');
+            console.log('Current step before goto:', document.querySelector('.step.active')?.id);
             e.preventDefault();
             e.stopPropagation();
+            
             try {
-              api.goto('overview');
-              console.log('Successfully called goto overview');
+              console.log('Calling api.goto("overview")...');
+              var result = api.goto('overview');
+              console.log('goto result:', result);
+              
+              // Check if overview method exists
+              console.log('api.overview exists:', typeof api.overview);
+              if (typeof api.overview === 'function') {
+                console.log('Calling api.overview()...');
+                api.overview();
+              }
+              
+              // Check step after a delay
+              setTimeout(function() {
+                console.log('Current step after goto:', document.querySelector('.step.active')?.id);
+                console.log('Overview element classes:', document.getElementById('overview').className);
+              }, 100);
+              
             } catch (err) {
-              console.error('Error calling goto:', err);
+              console.error('Error in overview:', err);
             }
           }
+          
           // Test with 'h' key
           if (e.key === 'h' || e.key === 'H') {
-            console.log('H key detected');
+            console.log('H key detected, simple goto');
             e.preventDefault();
-            api.goto('overview');
+            try {
+              api.goto('overview');
+            } catch (err) {
+              console.error('H key error:', err);
+            }
           }
         }, true);
-      }, 1000); // Wait 1 second for impress to be fully ready
+      }, 1000);
     };
     document.body.appendChild(script);
   })();

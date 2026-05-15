@@ -1,4 +1,54 @@
-# TV Vod — architecture
+# TV VOD ARCHITECTURE
+
+<div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 80px 40px; text-align: center; border-radius: 20px; margin: 40px 0;">
+  <div style="font-family: 'Arial Black', 'Helvetica', sans-serif; line-height: 1.1; color: #2c3e50;">
+    
+    <span style="font-size: 4.5em; font-weight: 900; display: block; margin: 20px 0;">ARCHITECTURE</span>
+    
+    <span style="font-size: 2.8em; font-weight: 700; margin-right: 30px;">STARTING POINT</span>
+    <span style="font-size: 3.2em; font-weight: 800; margin-right: 25px;">SMARTPHONES</span>
+    <span style="font-size: 2.4em; font-weight: 600;">PLAYVOD</span>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 3.8em; font-weight: 900; margin-right: 35px;">TV</span>
+      <span style="font-size: 2.6em; font-weight: 700; margin-right: 20px;">NATIVE FIRST</span>
+      <span style="font-size: 2.2em; font-weight: 600;">DEMOS</span>
+    </div>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 2.4em; font-weight: 600; margin-right: 25px;">CONTEXT</span>
+      <span style="font-size: 3.6em; font-weight: 800; margin-right: 30px;">OPTIONS</span>
+      <span style="font-size: 2.8em; font-weight: 700;">DEVELOPMENT</span>
+    </div>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 2.5em; font-weight: 600; margin-right: 20px;">WORKFLOW</span>
+      <span style="font-size: 4.2em; font-weight: 900; margin-right: 35px;">FRONT-END</span>
+      <span style="font-size: 2.3em; font-weight: 600;">BOLT.NEW</span>
+    </div>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 3.4em; font-weight: 800; margin-right: 30px;">SERVER</span>
+      <span style="font-size: 2.7em; font-weight: 700; margin-right: 25px;">CLOUDFLARE</span>
+      <span style="font-size: 2.4em; font-weight: 600;">WORKER</span>
+    </div>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 3.0em; font-weight: 700; margin-right: 25px;">NATIVE LAYER</span>
+      <span style="font-size: 2.5em; font-weight: 600; margin-right: 20px;">WEBOS</span>
+      <span style="font-size: 2.6em; font-weight: 700;">ANDROID</span>
+    </div>
+    
+    <div style="margin: 25px 0;">
+      <span style="font-size: 2.4em; font-weight: 600; margin-right: 25px;">TIZEN</span>
+      <span style="font-size: 2.8em; font-weight: 700; margin-right: 30px;">APPLETV</span>
+      <span style="font-size: 2.2em; font-weight: 600;">DEMOS</span>
+    </div>
+    
+    <span style="font-size: 3.5em; font-weight: 800; display: block; margin: 30px 0 10px 0;">THANK YOU</span>
+    
+  </div>
+</div>
 
 ---
 

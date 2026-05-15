@@ -986,7 +986,7 @@ flowchart TB
 
   <!-- ═══════════════════════ SLIDE 9: Server Diagram ═══════════════════════ -->
   <div id="server-diagram" class="step"
-       data-x="23200" data-y="400" data-z="-600" data-rotate-y="25">
+       data-x="23200" data-y="400" data-z="-600">
     <h2 class="amber">Server API — Diagram</h2>
     <h3>Device pairing flow + CORS proxy to upstream APIs</h3>
 
@@ -1027,6 +1027,9 @@ flowchart LR
   style KV fill:#fbbf24,color:#78350f
     </div>
   </div>
+
+  <div class="step" data-x="22800" data-y="300" data-z="-600" data-scale="0.6" style="display: none;"></div>
+  <div class="step" data-x="23600" data-y="480" data-z="-600" data-scale="0.8" style="display: none;"></div>
 
   <!-- ═══════════════════════ SLIDE 10: Roadmap ═══════════════════════ -->
   <div id="roadmap" class="step"
@@ -1103,9 +1106,70 @@ flowchart LR
     </div>
   </div>
 
+  <!-- ═══════════════════════ SLIDE 12: GitHub Foundation ═══════════════════════ -->
+  <div id="github-foundation" class="step"
+       data-x="28600" data-y="300" data-z="-350" data-rotate-y="5">
+    <h2 class="purple">Native Shell Foundation</h2>
+    <h3>Ready-to-use repository as starting point for Bolt.new and custom development</h3>
+
+    <div style="background: linear-gradient(135deg, #252538 0%, #1e1e2e 100%); border: 2px solid #8b5cf6; border-radius: 20px; padding: 60px; text-align: center; margin: 40px 0;">
+      
+      <!-- GitHub Icon -->
+      <div style="font-size: 80px; margin-bottom: 30px;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="#8b5cf6">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </div>
+      
+      <h4 style="color: #8b5cf6; font-size: 32px; margin-bottom: 20px;">TV VOD Native Shells</h4>
+      <p style="color: #94a3b8; font-size: 18px; margin-bottom: 32px; line-height: 1.6;">
+        Complete repository with native shell configurations, build scripts, and packaging pipelines for all TV platforms
+      </p>
+      
+      <!-- Repository Features -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; text-align: left;">
+        <div style="background: #1e1e2e; border-radius: 12px; padding: 24px;">
+          <h5 style="color: #8b5cf6; font-size: 18px; margin-bottom: 12px;">🏗️ Ready Configurations</h5>
+          <ul style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+            <li>webOS: <code>appinfo.json</code> + assets</li>
+            <li>Tizen: <code>config.xml</code> + icon</li>
+            <li>Android TV: Gradle + WebView setup</li>
+            <li>Apple TV: React Native scaffold</li>
+          </ul>
+        </div>
+        
+        <div style="background: #1e1e2e; border-radius: 12px; padding: 24px;">
+          <h5 style="color: #f59e0b; font-size: 18px; margin-bottom: 12px;">⚡ Bolt.new Ready</h5>
+          <ul style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+            <li>Pre-configured build scripts</li>
+            <li>Deployment automation</li>
+            <li>Development workflows</li>
+            <li>Platform-specific packaging</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Call to Action -->
+      <a href="https://github.com/digitalvirgo/tv-vod-native-shells" target="_blank" style="text-decoration: none;">
+        <div style="background: #8b5cf6; color: #fff; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 12px; transition: transform 0.3s;"
+             onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          Clone Repository & Start Building
+        </div>
+      </a>
+      
+      <p style="color: #64748b; font-size: 14px; margin-top: 16px; font-style: italic;">
+        "Fork this repo in Bolt.new and start prompting your TV app customizations"
+      </p>
+      
+    </div>
+  </div>
+
   <!-- ═══════════════════════ SLIDE: webOS Demos ═══════════════════════ -->
   <div id="webos-demos" class="step"
-       data-x="28800" data-y="0" data-z="-300" data-rotate-y="-5"
+       data-x="30400" data-y="0" data-z="-300" data-rotate-y="-5"
        style="display:flex; flex-direction:column; justify-content:center;">
     <h2>Demos — webOS TV App</h2>
     <h3>Video walkthroughs of the Hosted Web App on LG webOS</h3>
@@ -1142,7 +1206,7 @@ flowchart LR
 
   <!-- ═══════════════════════ SLIDE: Thank You ═══════════════════════ -->
   <div id="thankyou" class="step title-slide"
-       data-x="30800" data-y="0" data-z="-200" data-rotate-y="0">
+       data-x="32200" data-y="0" data-z="-200" data-rotate-y="0">
     <h1>Thank You</h1>
     <h1 class="muted" style="font-size:36px; font-weight:400; margin-top:8px;">Questions?</h1>
 
@@ -1243,6 +1307,34 @@ flowchart LR
         
         document.addEventListener('impress:stepleave', function(event) {
           console.log('Left step:', event.target.id);
+        });
+        
+        // Keep server-diagram active during hidden slide navigation
+        document.addEventListener('impress:stepenter', function(event) {
+          var currentStep = event.target;
+          var serverDiagram = document.getElementById('server-diagram');
+          
+          console.log('Entering step:', currentStep.id || 'no-id');
+          
+          // Check if we're on step-14 or step-15 (the hidden slides)
+          if (currentStep.id === 'step-14' || currentStep.id === 'step-15') {
+            console.log('Keeping server-diagram active for hidden slide');
+            // Force server-diagram to stay active
+            setTimeout(function() {
+              serverDiagram.classList.add('active');
+            }, 10);
+          }
+        });
+        
+        document.addEventListener('impress:stepleave', function(event) {
+          var currentStep = event.target;
+          var serverDiagram = document.getElementById('server-diagram');
+          
+          // If leaving server-diagram, check if we're going to a hidden slide
+          if (currentStep.id === 'server-diagram') {
+            console.log('Left server-diagram, checking next step');
+            // Don't remove active class yet, let stepenter handle it
+          }
         });
         
         document.addEventListener('keydown', function(e) {

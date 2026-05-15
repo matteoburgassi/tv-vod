@@ -954,7 +954,7 @@ flowchart LR
 
 <div class="hint">Use arrow keys or spacebar to navigate · Press <kbd>Home</kbd> for overview</div>
 
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="js/mermaid.min.js"></script>
 <script>
   mermaid.initialize({
     startOnLoad: false,
@@ -976,8 +976,38 @@ flowchart LR
   (async () => {
     await mermaid.run({ querySelector: '.mermaid' });
     var script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/gh/impress/impress.js@2.0.0/js/impress.js';
-    script.onload = function() { impress().init(); };
+    script.src = 'js/impress.js';
+    script.onload = function() { 
+      impress().init();
+      
+      // Wait for impress to fully initialize, then add key bindings
+      setTimeout(function() {
+        var api = impress();
+        console.log('Delayed API object:', api);
+        
+        document.addEventListener('keydown', function(e) {
+          console.log('Key pressed:', e.key, e.keyCode);
+          
+          if (e.keyCode === 36 || e.key === 'Home') {
+            console.log('Home key detected, going to overview');
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              api.goto('overview');
+              console.log('Successfully called goto overview');
+            } catch (err) {
+              console.error('Error calling goto:', err);
+            }
+          }
+          // Test with 'h' key
+          if (e.key === 'h' || e.key === 'H') {
+            console.log('H key detected');
+            e.preventDefault();
+            api.goto('overview');
+          }
+        }, true);
+      }, 1000); // Wait 1 second for impress to be fully ready
+    };
     document.body.appendChild(script);
   })();
 </script>
